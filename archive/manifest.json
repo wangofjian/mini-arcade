@@ -1,0 +1,372 @@
+[
+  {
+    "title": "弹球",
+    "slug": "pinball",
+    "canvas_id": "c6ea6157-d5bd-4371-8f3b-accc8be0807b",
+    "url": "https://cursor.com/canvas/store-0972d805-7417-48c1-af25-2f4cf76da740/c6ea6157-d5bd-4371-8f3b-accc8be0807b",
+    "archive": "/workspace/mini-arcade-standalone/archive/canvases/c6ea6157-d5bd-4371-8f3b-accc8be0807b-pinball.tsx",
+    "bytes": 17734,
+    "lines": 515,
+    "localStorage": false
+  },
+  {
+    "title": "中国象棋",
+    "slug": "xiangqi",
+    "canvas_id": "83489b60-1f35-42b4-86d4-8d71861306ee",
+    "url": "https://cursor.com/canvas/store-0972d805-7417-48c1-af25-2f4cf76da740/83489b60-1f35-42b4-86d4-8d71861306ee",
+    "archive": "/workspace/mini-arcade-standalone/archive/canvases/83489b60-1f35-42b4-86d4-8d71861306ee-xiangqi.tsx",
+    "bytes": 15636,
+    "lines": 473,
+    "localStorage": false
+  },
+  {
+    "title": "数独",
+    "slug": "sudoku",
+    "canvas_id": "44f906d9-6936-4bf0-b7ae-25ee8ffa841a",
+    "url": "https://cursor.com/canvas/store-0972d805-7417-48c1-af25-2f4cf76da740/44f906d9-6936-4bf0-b7ae-25ee8ffa841a",
+    "archive": "/workspace/mini-arcade-standalone/archive/canvases/44f906d9-6936-4bf0-b7ae-25ee8ffa841a-sudoku.tsx",
+    "bytes": 9483,
+    "lines": 20,
+    "localStorage": false
+  },
+  {
+    "title": "翻牌记忆",
+    "slug": "memory",
+    "canvas_id": "1662bd19-4761-4a5c-b6ae-d4bc933ef1f7",
+    "url": "https://cursor.com/canvas/store-0972d805-7417-48c1-af25-2f4cf76da740/1662bd19-4761-4a5c-b6ae-d4bc933ef1f7",
+    "archive": "/workspace/mini-arcade-standalone/archive/canvases/1662bd19-4761-4a5c-b6ae-d4bc933ef1f7-memory.tsx",
+    "bytes": 5585,
+    "lines": 41,
+    "localStorage": false
+  },
+  {
+    "title": "黑白棋",
+    "slug": "reversi",
+    "canvas_id": "76be132f-638b-43b1-96e1-e76ae496bebe",
+    "url": "https://cursor.com/canvas/store-0972d805-7417-48c1-af25-2f4cf76da740/76be132f-638b-43b1-96e1-e76ae496bebe",
+    "archive": "/workspace/mini-arcade-standalone/archive/canvases/76be132f-638b-43b1-96e1-e76ae496bebe-reversi.tsx",
+    "bytes": 15715,
+    "lines": 547,
+    "localStorage": false
+  },
+  {
+    "title": "TinyLang 玩具解释器",
+    "slug": "tinylang",
+    "canvas_id": "1a5318c3-f844-43c8-a428-e3fdeb7ace6c",
+    "url": "https://cursor.com/canvas/store-0972d805-7417-48c1-af25-2f4cf76da740/1a5318c3-f844-43c8-a428-e3fdeb7ace6c",
+    "archive": "/workspace/mini-arcade-standalone/archive/canvases/1a5318c3-f844-43c8-a428-e3fdeb7ace6c-tinylang.tsx",
+    "bytes": 23103,
+    "lines": 217,
+    "localStorage": false
+  },
+  {
+    "title": "2048",
+    "slug": "2048",
+    "canvas_id": "231ec411-01c8-4b7e-9de0-3d1d3594eff2",
+    "url": "https://cursor.com/canvas/store-0972d805-7417-48c1-af25-2f4cf76da740/231ec411-01c8-4b7e-9de0-3d1d3594eff2",
+    "archive": "/workspace/mini-arcade-standalone/archive/canvases/231ec411-01c8-4b7e-9de0-3d1d3594eff2-g2048.tsx",
+    "bytes": 9954,
+    "lines": 101,
+    "localStorage": false
+  },
+  {
+    "title": "滑动拼图",
+    "slug": "slider",
+    "canvas_id": "e5d930c7-a8bc-4904-ac2c-715bc477a008",
+    "url": "https://cursor.com/canvas/store-0972d805-7417-48c1-af25-2f4cf76da740/e5d930c7-a8bc-4904-ac2c-715bc477a008",
+    "archive": "/workspace/mini-arcade-standalone/archive/canvases/e5d930c7-a8bc-4904-ac2c-715bc477a008-slider.tsx",
+    "bytes": 4827,
+    "lines": 21,
+    "localStorage": false
+  },
+  {
+    "title": "星际战机",
+    "slug": "shooter",
+    "canvas_id": "707833c5-8706-4399-80cc-dd786358d91c",
+    "url": "https://cursor.com/canvas/store-0972d805-7417-48c1-af25-2f4cf76da740/707833c5-8706-4399-80cc-dd786358d91c",
+    "archive": "/workspace/mini-arcade-standalone/archive/canvases/707833c5-8706-4399-80cc-dd786358d91c-shooter.tsx",
+    "bytes": 9894,
+    "lines": 31,
+    "localStorage": false
+  },
+  {
+    "title": "扫雷",
+    "slug": "minesweeper",
+    "canvas_id": "c0a47b24-5cca-4b9c-b36f-908afb3cb40c",
+    "url": "https://cursor.com/canvas/store-0972d805-7417-48c1-af25-2f4cf76da740/c0a47b24-5cca-4b9c-b36f-908afb3cb40c",
+    "archive": "/workspace/mini-arcade-standalone/archive/canvases/c0a47b24-5cca-4b9c-b36f-908afb3cb40c-minesweeper.tsx",
+    "bytes": 6966,
+    "lines": 31,
+    "localStorage": false
+  },
+  {
+    "title": "飞行棋",
+    "slug": "aeroplane",
+    "canvas_id": "2dd74d62-138b-40da-afce-d8f29d3a82e0",
+    "url": "https://cursor.com/canvas/store-0972d805-7417-48c1-af25-2f4cf76da740/2dd74d62-138b-40da-afce-d8f29d3a82e0",
+    "archive": "/workspace/mini-arcade-standalone/archive/canvases/2dd74d62-138b-40da-afce-d8f29d3a82e0-aeroplane.tsx",
+    "bytes": 15597,
+    "lines": 486,
+    "localStorage": false
+  },
+  {
+    "title": "消消乐",
+    "slug": "match3",
+    "canvas_id": "c264550d-2dd6-4f60-93fa-3608ca68c60d",
+    "url": "https://cursor.com/canvas/store-0972d805-7417-48c1-af25-2f4cf76da740/c264550d-2dd6-4f60-93fa-3608ca68c60d",
+    "archive": "/workspace/mini-arcade-standalone/archive/canvases/c264550d-2dd6-4f60-93fa-3608ca68c60d-match3.tsx",
+    "bytes": 6152,
+    "lines": 14,
+    "localStorage": false
+  },
+  {
+    "title": "乒乓",
+    "slug": "pong",
+    "canvas_id": "bd697708-1277-4874-9191-e70400919e80",
+    "url": "https://cursor.com/canvas/store-0972d805-7417-48c1-af25-2f4cf76da740/bd697708-1277-4874-9191-e70400919e80",
+    "archive": "/workspace/mini-arcade-standalone/archive/canvases/bd697708-1277-4874-9191-e70400919e80-pong.tsx",
+    "bytes": 7491,
+    "lines": 48,
+    "localStorage": false
+  },
+  {
+    "title": "接水果",
+    "slug": "fruit",
+    "canvas_id": "4b6025ed-a3f0-44c3-a18f-c85ef0d78ab1",
+    "url": "https://cursor.com/canvas/store-0972d805-7417-48c1-af25-2f4cf76da740/4b6025ed-a3f0-44c3-a18f-c85ef0d78ab1",
+    "archive": "/workspace/mini-arcade-standalone/archive/canvases/4b6025ed-a3f0-44c3-a18f-c85ef0d78ab1-fruit.tsx",
+    "bytes": 8758,
+    "lines": 54,
+    "localStorage": false
+  },
+  {
+    "title": "推箱子",
+    "slug": "sokoban",
+    "canvas_id": "acc54e29-9781-482b-b050-78eef7ffbb65",
+    "url": "https://cursor.com/canvas/store-0972d805-7417-48c1-af25-2f4cf76da740/acc54e29-9781-482b-b050-78eef7ffbb65",
+    "archive": "/workspace/mini-arcade-standalone/archive/canvases/acc54e29-9781-482b-b050-78eef7ffbb65-sokoban.tsx",
+    "bytes": 8561,
+    "lines": 98,
+    "localStorage": false
+  },
+  {
+    "title": "纸牌接龙",
+    "slug": "solitaire",
+    "canvas_id": "cca2289c-e1c5-4999-b2fa-d370e428c462",
+    "url": "https://cursor.com/canvas/store-0972d805-7417-48c1-af25-2f4cf76da740/cca2289c-e1c5-4999-b2fa-d370e428c462",
+    "archive": "/workspace/mini-arcade-standalone/archive/canvases/cca2289c-e1c5-4999-b2fa-d370e428c462-solitaire.tsx",
+    "bytes": 27797,
+    "lines": 947,
+    "localStorage": false
+  },
+  {
+    "title": "二十一点",
+    "slug": "blackjack",
+    "canvas_id": "106e6be9-3b29-49e6-9bc2-15abbd35222f",
+    "url": "https://cursor.com/canvas/store-0972d805-7417-48c1-af25-2f4cf76da740/106e6be9-3b29-49e6-9bc2-15abbd35222f",
+    "archive": "/workspace/mini-arcade-standalone/archive/canvases/106e6be9-3b29-49e6-9bc2-15abbd35222f-blackjack.tsx",
+    "bytes": 14648,
+    "lines": 514,
+    "localStorage": false
+  },
+  {
+    "title": "华容道",
+    "slug": "huarong",
+    "canvas_id": "908fc54f-97a7-4608-b85d-2af59702f517",
+    "url": "https://cursor.com/canvas/store-0972d805-7417-48c1-af25-2f4cf76da740/908fc54f-97a7-4608-b85d-2af59702f517",
+    "archive": "/workspace/mini-arcade-standalone/archive/canvases/908fc54f-97a7-4608-b85d-2af59702f517-huarong.tsx",
+    "bytes": 5571,
+    "lines": 23,
+    "localStorage": false
+  },
+  {
+    "title": "俄罗斯方块",
+    "slug": "tetris",
+    "canvas_id": "0ec334d7-8623-4d7f-b7d1-faaf3b268081",
+    "url": "https://cursor.com/canvas/store-0972d805-7417-48c1-af25-2f4cf76da740/0ec334d7-8623-4d7f-b7d1-faaf3b268081",
+    "archive": "/workspace/mini-arcade-standalone/archive/canvases/0ec334d7-8623-4d7f-b7d1-faaf3b268081-tetris.tsx",
+    "bytes": 10608,
+    "lines": 52,
+    "localStorage": false
+  },
+  {
+    "title": "节奏点按",
+    "slug": "rhythm",
+    "canvas_id": "cd7c4d60-54ad-4b30-8a72-8bc5db4f3f61",
+    "url": "https://cursor.com/canvas/store-0972d805-7417-48c1-af25-2f4cf76da740/cd7c4d60-54ad-4b30-8a72-8bc5db4f3f61",
+    "archive": "/workspace/mini-arcade-standalone/archive/canvases/cd7c4d60-54ad-4b30-8a72-8bc5db4f3f61-rhythm.tsx",
+    "bytes": 7753,
+    "lines": 22,
+    "localStorage": false
+  },
+  {
+    "title": "四子棋",
+    "slug": "connect4",
+    "canvas_id": "1df99db2-2f61-45f3-89b9-a427df7e0443",
+    "url": "https://cursor.com/canvas/store-0972d805-7417-48c1-af25-2f4cf76da740/1df99db2-2f61-45f3-89b9-a427df7e0443",
+    "archive": "/workspace/mini-arcade-standalone/archive/canvases/1df99db2-2f61-45f3-89b9-a427df7e0443-connect4.tsx",
+    "bytes": 19955,
+    "lines": 686,
+    "localStorage": false
+  },
+  {
+    "title": "打地鼠",
+    "slug": "whack",
+    "canvas_id": "d9cbd155-ae39-4463-8a89-c9220903e15d",
+    "url": "https://cursor.com/canvas/store-0972d805-7417-48c1-af25-2f4cf76da740/d9cbd155-ae39-4463-8a89-c9220903e15d",
+    "archive": "/workspace/mini-arcade-standalone/archive/canvases/d9cbd155-ae39-4463-8a89-c9220903e15d-whack.tsx",
+    "bytes": 5074,
+    "lines": 16,
+    "localStorage": false
+  },
+  {
+    "title": "蹦跳小鸟",
+    "slug": "flappy",
+    "canvas_id": "7331d520-b5ad-4479-a52a-4a6d389a28ba",
+    "url": "https://cursor.com/canvas/store-0972d805-7417-48c1-af25-2f4cf76da740/7331d520-b5ad-4479-a52a-4a6d389a28ba",
+    "archive": "/workspace/mini-arcade-standalone/archive/canvases/7331d520-b5ad-4479-a52a-4a6d389a28ba-flappy.tsx",
+    "bytes": 6864,
+    "lines": 50,
+    "localStorage": false
+  },
+  {
+    "title": "泡泡龙",
+    "slug": "bubbles",
+    "canvas_id": "ad65a45b-2105-48a9-a9c6-c32c2da65898",
+    "url": "https://cursor.com/canvas/store-0972d805-7417-48c1-af25-2f4cf76da740/ad65a45b-2105-48a9-a9c6-c32c2da65898",
+    "archive": "/workspace/mini-arcade-standalone/archive/canvases/ad65a45b-2105-48a9-a9c6-c32c2da65898-bubbles.tsx",
+    "bytes": 17061,
+    "lines": 559,
+    "localStorage": false
+  },
+  {
+    "title": "跳一跳",
+    "slug": "jump",
+    "canvas_id": "80ed57f6-a5ce-459c-984e-9f3b801b27c0",
+    "url": "https://cursor.com/canvas/store-0972d805-7417-48c1-af25-2f4cf76da740/80ed57f6-a5ce-459c-984e-9f3b801b27c0",
+    "archive": "/workspace/mini-arcade-standalone/archive/canvases/80ed57f6-a5ce-459c-984e-9f3b801b27c0-jump.tsx",
+    "bytes": 7796,
+    "lines": 34,
+    "localStorage": true
+  },
+  {
+    "title": "连连看",
+    "slug": "lianliankan",
+    "canvas_id": "d5af817d-5ead-41b4-adfb-617e59865d22",
+    "url": "https://cursor.com/canvas/store-0972d805-7417-48c1-af25-2f4cf76da740/d5af817d-5ead-41b4-adfb-617e59865d22",
+    "archive": "/workspace/mini-arcade-standalone/archive/canvases/d5af817d-5ead-41b4-adfb-617e59865d22-lianliankan.tsx",
+    "bytes": 15459,
+    "lines": 559,
+    "localStorage": false
+  },
+  {
+    "title": "小游戏厅",
+    "slug": "hub-original",
+    "canvas_id": "a1701b64-4277-49b0-be8b-05d592a7b353",
+    "url": "https://cursor.com/canvas/store-0972d805-7417-48c1-af25-2f4cf76da740/a1701b64-4277-49b0-be8b-05d592a7b353",
+    "archive": "/workspace/mini-arcade-standalone/archive/canvases/a1701b64-4277-49b0-be8b-05d592a7b353-hub-original.tsx",
+    "bytes": 6954,
+    "lines": 54,
+    "localStorage": false
+  },
+  {
+    "title": "军棋",
+    "slug": "junqi",
+    "canvas_id": "f8651a64-0109-4e1c-b44e-5e555c8d490e",
+    "url": "https://cursor.com/canvas/store-0972d805-7417-48c1-af25-2f4cf76da740/f8651a64-0109-4e1c-b44e-5e555c8d490e",
+    "archive": "/workspace/mini-arcade-standalone/archive/canvases/f8651a64-0109-4e1c-b44e-5e555c8d490e-junqi.tsx",
+    "bytes": 13433,
+    "lines": 469,
+    "localStorage": false
+  },
+  {
+    "title": "钓鱼",
+    "slug": "fishing",
+    "canvas_id": "1fdc1b83-7f4c-4a27-b8a6-16db1ae0b67e",
+    "url": "https://cursor.com/canvas/store-0972d805-7417-48c1-af25-2f4cf76da740/1fdc1b83-7f4c-4a27-b8a6-16db1ae0b67e",
+    "archive": "/workspace/mini-arcade-standalone/archive/canvases/1fdc1b83-7f4c-4a27-b8a6-16db1ae0b67e-fishing.tsx",
+    "bytes": 14301,
+    "lines": 429,
+    "localStorage": false
+  },
+  {
+    "title": "坦克对战",
+    "slug": "tank",
+    "canvas_id": "1cbfff36-9e17-4247-a494-3b3dd9dfc5c4",
+    "url": "https://cursor.com/canvas/store-0972d805-7417-48c1-af25-2f4cf76da740/1cbfff36-9e17-4247-a494-3b3dd9dfc5c4",
+    "archive": "/workspace/mini-arcade-standalone/archive/canvases/1cbfff36-9e17-4247-a494-3b3dd9dfc5c4-tank.tsx",
+    "bytes": 8789,
+    "lines": 47,
+    "localStorage": false
+  },
+  {
+    "title": "五子棋",
+    "slug": "gomoku",
+    "canvas_id": "14239be4-a132-4c13-919e-c1280b45df1c",
+    "url": "https://cursor.com/canvas/store-0972d805-7417-48c1-af25-2f4cf76da740/14239be4-a132-4c13-919e-c1280b45df1c",
+    "archive": "/workspace/mini-arcade-standalone/archive/canvases/14239be4-a132-4c13-919e-c1280b45df1c-gomoku.tsx",
+    "bytes": 5769,
+    "lines": 14,
+    "localStorage": false
+  },
+  {
+    "title": "贪吃蛇",
+    "slug": "snake",
+    "canvas_id": "b718e570-8b77-49b4-95a8-da5ee2cc312c",
+    "url": "https://cursor.com/canvas/store-0972d805-7417-48c1-af25-2f4cf76da740/b718e570-8b77-49b4-95a8-da5ee2cc312c",
+    "archive": "/workspace/mini-arcade-standalone/archive/canvases/b718e570-8b77-49b4-95a8-da5ee2cc312c-snake.tsx",
+    "bytes": 9268,
+    "lines": 65,
+    "localStorage": false
+  },
+  {
+    "title": "井字棋",
+    "slug": "tictactoe",
+    "canvas_id": "2a556992-f3de-4580-8ff8-36b123130c7a",
+    "url": "https://cursor.com/canvas/store-0972d805-7417-48c1-af25-2f4cf76da740/2a556992-f3de-4580-8ff8-36b123130c7a",
+    "archive": "/workspace/mini-arcade-standalone/archive/canvases/2a556992-f3de-4580-8ff8-36b123130c7a-tictactoe.tsx",
+    "bytes": 5755,
+    "lines": 84,
+    "localStorage": false
+  },
+  {
+    "title": "打砖块",
+    "slug": "breakout",
+    "canvas_id": "af68b29d-66a7-4a77-b8cf-72d718b1a0b8",
+    "url": "https://cursor.com/canvas/store-0972d805-7417-48c1-af25-2f4cf76da740/af68b29d-66a7-4a77-b8cf-72d718b1a0b8",
+    "archive": "/workspace/mini-arcade-standalone/archive/canvases/af68b29d-66a7-4a77-b8cf-72d718b1a0b8-breakout.tsx",
+    "bytes": 9473,
+    "lines": 51,
+    "localStorage": false
+  },
+  {
+    "title": "星际入侵 · 像素防线",
+    "slug": "invaders",
+    "canvas_id": "367d80b9-3fe6-47c4-82dc-37eabf90eb75",
+    "url": "https://cursor.com/canvas/store-0972d805-7417-48c1-af25-2f4cf76da740/367d80b9-3fe6-47c4-82dc-37eabf90eb75",
+    "archive": "/workspace/mini-arcade-standalone/archive/canvases/367d80b9-3fe6-47c4-82dc-37eabf90eb75-invaders.tsx",
+    "bytes": 11034,
+    "lines": 32,
+    "localStorage": false
+  },
+  {
+    "title": "丛林突击 · Run & Gun",
+    "slug": "contra",
+    "canvas_id": "504f45ad-4e14-4d85-8b91-2b1aa0e87604",
+    "url": "https://cursor.com/canvas/store-0972d805-7417-48c1-af25-2f4cf76da740/504f45ad-4e14-4d85-8b91-2b1aa0e87604",
+    "archive": "/workspace/mini-arcade-standalone/archive/canvases/504f45ad-4e14-4d85-8b91-2b1aa0e87604-contra.tsx",
+    "bytes": 11196,
+    "lines": 52,
+    "localStorage": false
+  },
+  {
+    "title": "迷宫豆豆 · Dot Maze",
+    "slug": "pacmaze",
+    "canvas_id": "f58a6340-23e1-4db7-bfbe-e94f23fab73a",
+    "url": "https://cursor.com/canvas/store-0972d805-7417-48c1-af25-2f4cf76da740/f58a6340-23e1-4db7-bfbe-e94f23fab73a",
+    "archive": "/workspace/mini-arcade-standalone/archive/canvases/f58a6340-23e1-4db7-bfbe-e94f23fab73a-pacmaze.tsx",
+    "bytes": 9000,
+    "lines": 43,
+    "localStorage": false
+  }
+]

@@ -1,0 +1,8 @@
+# 示例配置：后续若部署到 Cloudflare Workers Static Assets，可参考此文件。
+# 本仓库当前不执行部署。
+name = "mini-arcade-standalone"
+compatibility_date = "2026-11-10"
+
+[assets]
+directory = "./dist"
+not_found_handling = "single-page-application"
