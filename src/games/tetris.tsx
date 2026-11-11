@@ -9,6 +9,8 @@ import {
   type KeyboardEvent
 } from '../compat/grok-canvas';
 import { HoldButton } from '../mobile/HoldButton';
+import { useImmersivePlay } from '../mobile/immersivePlay';
+import { fitSize } from '../mobile/scale';
 
 type Kind = 'I'|'O'|'T'|'S'|'Z'|'J'|'L';
 type Piece = {kind:Kind; m:number[][]; x:number; y:number};
@@ -27,8 +29,26 @@ function rotate(g:Game,cw:boolean){if(g.p.kind==='O')return;const m=g.p.m,n=m.le
 
 export default function App(){
  const theme=useGrokTheme();
+ const {active:immersive,enter,exit}=useImmersivePlay();
  const boardRef=useRef<HTMLCanvasElement|null>(null),previewRef=useRef<HTMLCanvasElement|null>(null),rootRef=useRef<HTMLDivElement|null>(null);
+ const stageRef=useRef<HTMLDivElement|null>(null),sideRef=useRef<HTMLDivElement|null>(null);
  const game=useRef<Game>(fresh());const down=useRef(false);const [,refresh]=useState(0);const update=()=>refresh((v:number)=>v+1);
+ const [boardFit,setBoardFit]=useState({width:300,height:600});
+ useEffect(()=>{
+  if(!immersive)return;
+  const stage=stageRef.current;if(!stage)return;
+  const measure=()=>{
+   const sideW=(sideRef.current?.offsetWidth??72)+8;
+   const fit=fitSize(300,600,Math.max(0,stage.clientWidth-sideW),Math.max(0,stage.clientHeight),true);
+   setBoardFit({width:Math.max(1,Math.floor(fit.width)),height:Math.max(1,Math.floor(fit.height))});
+  };
+  measure();
+  const ro=new ResizeObserver(measure);
+  ro.observe(stage);
+  if(sideRef.current)ro.observe(sideRef.current);
+  return()=>ro.disconnect();
+ },[immersive]);
+ useEffect(()=>{if(immersive)rootRef.current?.focus({preventScroll:true});},[immersive]);
  const act=(a:string)=>{const g=game.current;if(a==='restart'){game.current=fresh();game.current.status='running';down.current=false;}else if(a==='pause'){if(g.status==='ready'||g.status==='paused')g.status='running';else if(g.status==='running')g.status='paused';down.current=false;}else if(g.status==='running'){if(a==='left')move(g,-1,0);if(a==='right')move(g,1,0);if(a==='down'&&move(g,0,1))g.score++;if(a==='cw')rotate(g,true);if(a==='ccw')rotate(g,false);if(a==='drop'){let d=0;while(move(g,0,1))d++;g.score+=d*2;lock(g);}if(a==='hold'&&!g.held){const old=g.hold;g.hold=g.p.kind;spawn(g,old??undefined);g.held=true;}}update();rootRef.current?.focus({preventScroll:true});};
  useEffect(()=>{
  let raf=0,last=0;
@@ -41,30 +61,45 @@ export default function App(){
  window.addEventListener('blur',blur);const visibility=()=>{if(document.hidden)blur();};document.addEventListener('visibilitychange',visibility);raf=requestAnimationFrame(tick);return()=>{cancelAnimationFrame(raf);window.removeEventListener('blur',blur);document.removeEventListener('visibilitychange',visibility);};
  },[]);
  const key=(e:KeyboardEvent<HTMLDivElement>)=>{const k=e.key.toLowerCase();const map:Record<string,string>={arrowleft:'left',a:'left',arrowright:'right',d:'right',arrowup:'cw',w:'cw',x:'cw',z:'ccw',q:'ccw',' ':'drop',p:'pause',r:'restart',c:'hold',shift:'hold',enter:'pause'};if(k==='arrowdown'||k==='s'){e.preventDefault();down.current=true;return;}if(map[k]){e.preventDefault();if(e.repeat&&['drop','pause','restart','hold','cw','ccw'].includes(map[k]))return;act(map[k]);}};
- const g=game.current;const btn={border:`1px solid ${theme.border.default}`,background:theme.bg.subtle,color:theme.text.primary,padding:'12px 16px',borderRadius:8,fontFamily:theme.font.family,fontSize:15,cursor:'pointer',touchAction:'manipulation' as const};
+ const g=game.current;
+ const stats=[['得分',g.score.toLocaleString()],['消行',String(g.lines)],['等级',String(g.level)]];
+ const boardStyle=immersive
+  ?{width:boardFit.width,height:boardFit.height,display:'block',touchAction:'none' as const}
+  :{width:'100%',display:'block',touchAction:'none' as const};
  return <Page title="俄罗斯方块" summary="一局经典方块，随时开玩。七袋随机、落点预览、方块暂存与逐级加速。" width="wide" lang="zh-Hans">
- <Text>手机用下方按键：按住左右移动会连移，按住软降可持续下落；点按旋转、硬降和暂存。电脑仍可用键盘。填满一行即可消除；每消除 10 行升一级。进度仅保留在本次页面中。</Text>
- <div ref={rootRef} tabIndex={0} onKeyDown={key} onKeyUp={(e:KeyboardEvent<HTMLDivElement>)=>{if(['arrowdown','s'].includes(e.key.toLowerCase())){e.preventDefault();down.current=false;}}} onBlur={()=>{down.current=false;}} style={{outline:'none',color:theme.text.primary,fontFamily:theme.font.family}}>
- <div style={{display:'flex',flexWrap:'wrap',gap:24,alignItems:'flex-start',marginTop:20}}>
- <div style={{flex:'0 1 300px',width:'100%',position:'relative',lineHeight:0,border:`1px solid ${theme.border.strong}`,borderRadius:8,overflow:'hidden'}}>
- <canvas ref={boardRef} width={300} height={600} aria-label="俄罗斯方块 10 列 20 行棋盘" onClick={()=>rootRef.current?.focus({preventScroll:true})} style={{width:'100%',display:'block',touchAction:'none'}} />
- {g.status!=='running'&&<div style={{position:'absolute',inset:0,display:'flex',alignItems:'center',justifyContent:'center',background:theme.bg.base+'e8',lineHeight:1.6}}><div style={{textAlign:'center',padding:20,color:theme.text.primary,background:theme.bg.base}}><div style={{fontSize:26,fontWeight:600,marginBottom:12}}>{g.status==='over'?'游戏结束':g.status==='paused'?'已暂停':'准备好了吗？'}</div><div style={{fontSize:14,marginBottom:20,color:theme.text.secondary}}>{g.status==='over'?`最终得分 ${g.score.toLocaleString()} · 消除 ${g.lines} 行`:g.status==='paused'?'喘口气，再挑战下一行。':'把方块拼成完整的一行。'}</div><Button label={g.status==='over'?'再来一局':g.status==='paused'?'继续游戏':'开始游戏'} variant="primary" onClick={()=>act(g.status==='over'?'restart':'pause')}/></div></div>}
+ <div className="tetris-intro"><Text>手机可点「全屏游玩」，一屏只留棋盘和半透明虚拟键；按住左右会连移，按住软降可持续下落。电脑仍可用键盘。填满一行即可消除；每消除 10 行升一级。进度仅保留在本次页面中。</Text></div>
+ <div ref={rootRef} className={'tetris-play'+(immersive?' is-on':'')} tabIndex={0} onKeyDown={key} onKeyUp={(e:KeyboardEvent<HTMLDivElement>)=>{if(['arrowdown','s'].includes(e.key.toLowerCase())){e.preventDefault();down.current=false;}}} onBlur={()=>{down.current=false;}} style={{outline:'none',color:theme.text.primary,fontFamily:theme.font.family}}>
+ {!immersive&&<div className="tetris-page-actions"><Button label="全屏游玩" variant="primary" onClick={enter}/></div>}
+ {immersive&&<div className="tetris-hud">
+  <button type="button" className="gc-btn" onClick={exit}>退出全屏</button>
+  <div className="tetris-hud-stats">{stats.map(([label,value]:string[])=><span key={label}><small>{label}</small>{value}</span>)}</div>
+  <div className="tetris-hud-actions"><Button label={g.status==='running'?'暂停':'继续'} onClick={()=>act('pause')} disabled={g.status==='over'}/><Button label="重开" onClick={()=>act('restart')}/></div>
+  <div className="tetris-hud-msg" aria-live="polite">{g.message}</div>
+ </div>}
+ <div ref={stageRef} className="tetris-stage">
+ <div className="tetris-board" style={{border:`1px solid ${theme.border.strong}`}}>
+ <canvas ref={boardRef} width={300} height={600} aria-label="俄罗斯方块 10 列 20 行棋盘" onClick={()=>rootRef.current?.focus({preventScroll:true})} style={boardStyle} />
+ {g.status!=='running'&&<div className="tetris-overlay" style={{background:theme.bg.base+'e8'}}><div style={{textAlign:'center',padding:20,color:theme.text.primary,background:theme.bg.base}}><div style={{fontSize:immersive?22:26,fontWeight:600,marginBottom:12}}>{g.status==='over'?'游戏结束':g.status==='paused'?'已暂停':'准备好了吗？'}</div><div style={{fontSize:14,marginBottom:20,color:theme.text.secondary}}>{g.status==='over'?`最终得分 ${g.score.toLocaleString()} · 消除 ${g.lines} 行`:g.status==='paused'?'喘口气，再挑战下一行。':'把方块拼成完整的一行。'}</div><div className="tetris-overlay-actions"><Button label={g.status==='over'?'再来一局':g.status==='paused'?'继续游戏':'开始游戏'} variant="primary" onClick={()=>act(g.status==='over'?'restart':'pause')}/>{!immersive&&<Button label="全屏游玩" onClick={enter}/>}</div></div></div>}
  </div>
- <div style={{flex:'1 1 170px',minWidth:0}}>
- <div style={{display:'flex',gap:24,flexWrap:'wrap',marginBottom:20}}>{[['得分',g.score.toLocaleString()],['消行',String(g.lines)],['等级',String(g.level)]].map(([label,value]:string[])=><div key={label}><div style={{fontSize:13,color:theme.text.secondary}}>{label}</div><div style={{fontSize:30,fontWeight:600,fontVariantNumeric:'tabular-nums'}}>{value}</div></div>)}</div>
- <canvas ref={previewRef} width={180} height={330} aria-label={`接下来：${g.queue.join('、')}；暂存：${g.hold??'无'}`} style={{width:'100%',maxWidth:180,borderRadius:8,display:'block'}}/>
- <div aria-live="polite" style={{fontSize:14,color:theme.text.secondary,margin:'16px 0'}}>{g.message}</div>
- <div style={{display:'flex',flexWrap:'wrap',gap:8}}><Button label={g.status==='running'?'暂停 P':'继续 / 开始 P'} onClick={()=>act('pause')} disabled={g.status==='over'}/><Button label="重新开始 R" onClick={()=>act('restart')}/></div>
+ <div ref={sideRef} className="tetris-side">
+ <div className="tetris-stats">{stats.map(([label,value]:string[])=><div key={label}><div style={{fontSize:13,color:theme.text.secondary}}>{label}</div><div style={{fontSize:30,fontWeight:600,fontVariantNumeric:'tabular-nums'}}>{value}</div></div>)}</div>
+ <canvas ref={previewRef} width={180} height={330} aria-label={`接下来：${g.queue.join('、')}；暂存：${g.hold??'无'}`} className="tetris-preview"/>
+ <div className="tetris-side-msg" aria-live="polite">{g.message}</div>
+ <div className="tetris-side-actions"><Button label={g.status==='running'?'暂停 P':'继续 / 开始 P'} onClick={()=>act('pause')} disabled={g.status==='over'}/><Button label="重新开始 R" onClick={()=>act('restart')}/></div>
  </div></div>
- <div className="game-controls" style={{marginTop:20}}>
-  <HoldButton label="← 左移" disabled={g.status!=='running'} repeat onPress={()=>act('left')} />
-  <HoldButton label="右移 →" disabled={g.status!=='running'} repeat onPress={()=>act('right')} />
-  <HoldButton label="↶ 逆旋" disabled={g.status!=='running'} onPress={()=>act('ccw')} />
-  <HoldButton label="顺旋 ↷" disabled={g.status!=='running'} onPress={()=>act('cw')} />
-  <HoldButton label="↓ 软降" disabled={g.status!=='running'} onDown={()=>{if(g.status==='running')down.current=true;}} onUp={()=>{down.current=false;}} />
-  <HoldButton label="硬降 ⤓" disabled={g.status!=='running'} onPress={()=>act('drop')} />
-  <HoldButton label="暂存 C" disabled={g.status!=='running'} onPress={()=>act('hold')} />
+ <div className="game-controls tetris-virtual-pad">
+  <div className="tetris-pad-move">
+  <HoldButton label="← 左移" ariaLabel="左移" disabled={g.status!=='running'} repeat onPress={()=>act('left')}><span className="pad-full">← 左移</span><span className="pad-short">←</span></HoldButton>
+  <HoldButton label="右移 →" ariaLabel="右移" disabled={g.status!=='running'} repeat onPress={()=>act('right')}><span className="pad-full">右移 →</span><span className="pad-short">→</span></HoldButton>
+  <HoldButton label="↓ 软降" ariaLabel="软降" disabled={g.status!=='running'} onDown={()=>{if(g.status==='running')down.current=true;}} onUp={()=>{down.current=false;}}><span className="pad-full">↓ 软降</span><span className="pad-short">↓</span></HoldButton>
+  </div>
+  <div className="tetris-pad-act">
+  <HoldButton label="↶ 逆旋" ariaLabel="逆时针旋转" disabled={g.status!=='running'} onPress={()=>act('ccw')}><span className="pad-full">↶ 逆旋</span><span className="pad-short">↶</span></HoldButton>
+  <HoldButton label="顺旋 ↷" ariaLabel="顺时针旋转" disabled={g.status!=='running'} onPress={()=>act('cw')}><span className="pad-full">顺旋 ↷</span><span className="pad-short">↷</span></HoldButton>
+  <HoldButton label="硬降 ⤓" ariaLabel="硬降" disabled={g.status!=='running'} onPress={()=>act('drop')}><span className="pad-full">硬降 ⤓</span><span className="pad-short">⤓</span></HoldButton>
+  <HoldButton label="暂存 C" ariaLabel="暂存" disabled={g.status!=='running'} onPress={()=>act('hold')}><span className="pad-full">暂存 C</span><span className="pad-short">暂</span></HoldButton>
+  </div>
  </div>
- <div style={{marginTop:18,fontSize:13,lineHeight:1.9,color:theme.text.secondary}}>触控按键见上方；键盘：← → / A D：移动　↓ / S：按住软降　↑ / W / X：顺时针　Z / Q：逆时针<br/>空格：直接落底　C / Shift：暂存　P：暂停　R：重开<br/>消除 1 / 2 / 3 / 4 行：100 / 300 / 500 / 800 × 当前等级；软降每格 1 分，硬降每格 2 分。离开窗口会自动暂停。</div>
+ <div className="tetris-help">触控按键见上方；键盘：← → / A D：移动　↓ / S：按住软降　↑ / W / X：顺时针　Z / Q：逆时针<br/>空格：直接落底　C / Shift：暂存　P：暂停　R：重开　Esc：退出全屏<br/>消除 1 / 2 / 3 / 4 行：100 / 300 / 500 / 800 × 当前等级；软降每格 1 分，硬降每格 2 分。离开窗口会自动暂停。</div>
  </div></Page>;
 }
