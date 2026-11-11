@@ -6,10 +6,15 @@ import {
   Select,
   useReducer,
   useEffect,
+  useRef,
   useGrokTheme,
   type CSSProperties
 } from '../compat/grok-canvas';
 import { DPad } from '../mobile/DPad';
+import { HandheldPad } from '../mobile/HandheldPad';
+import { ImmersiveFrame } from '../mobile/ImmersiveFrame';
+import { useImmersivePlay } from '../mobile/immersivePlay';
+import { useStageFit } from '../mobile/useStageFit';
 
 const LEVELS = [
  {name:'初次搬运',map:['######','#    #','# @$ .#','#    #','######']},
@@ -46,6 +51,9 @@ export default function App(){
  const theme=useGrokTheme();
  const [s,dispatch]=useReducer(reducer,{level:0,board:parse(0).board,history:[],best:Array(8).fill(null)} as State);
  const map=parse(s.level),clear=won(s.level,s.board),placed=map.goals.filter((g:number)=>s.board.boxes.includes(g)).length;
+ const stageRef=useRef<HTMLDivElement|null>(null);
+ const {active:immersive}=useImmersivePlay();
+ const fit=useStageFit(stageRef,map.w,map.h,immersive,true);
  useEffect(()=>{
   const handler=(e:globalThis.KeyboardEvent)=>{
    const tag=(e.target as HTMLElement|null)?.tagName;
@@ -58,21 +66,39 @@ export default function App(){
  },[]);
  const neutral:CSSProperties={color:theme.text.secondary,fontFamily:theme.font.family};
  const move=(dx:number,dy:number)=>dispatch({type:'move',dx,dy});
+ const movePad=(dir:'up'|'down'|'left'|'right')=>{if(dir==='left')move(-1,0);if(dir==='right')move(1,0);if(dir==='up')move(0,-1);if(dir==='down')move(0,1);};
  return <Page title="推箱子" summary="小仓库，大智慧。八关递进挑战，把每只箱子送到圆形目标。" width="wide" lang="zh-Hans">
-  <Section>
-   <div style={{display:'flex',flexWrap:'wrap',alignItems:'center',justifyContent:'space-between',gap:16}}>
-    <Select label="选择关卡" value={String(s.level)} options={LEVELS.map((l:{name:string;map:string[]},i:number)=>({value:String(i),label:`${s.best[i]!==null?'✓ ':''}${String(i+1).padStart(2,'0')} · ${l.name}`}))} onChange={(v:string)=>dispatch({type:'load',level:Number(v)})}/>
-    <div style={{display:'flex',flexWrap:'wrap',gap:24,...neutral}}>
+  <ImmersiveFrame
+   layout="overlay"
+   stageRef={stageRef}
+   intro={<Text>手机可点「全屏游玩」：棋盘铺满屏幕，半透明十字键推箱（按住可连移），右侧圆形键撤销。电脑仍可用键盘。</Text>}
+   hudStats={<><span><small>移动</small>{s.board.moves}</span><span><small>推箱</small>{s.board.pushes}</span><span><small>目标</small>{placed}/{map.goals.length}</span><span><small>最佳</small>{s.best[s.level]??'—'}</span></>}
+   hudActions={<>
+    {clear&&<Button label={s.level===7?'第 1 关':'下一关'} variant="primary" onClick={()=>dispatch({type:'load',level:(s.level+1)%8})}/>}
+    <Button label="撤销" disabled={!s.history.length} onClick={()=>dispatch({type:'undo'})}/>
+    <Button label="重开" onClick={()=>dispatch({type:'load',level:s.level})}/>
+   </>}
+   pageActions={<Select label="选择关卡" value={String(s.level)} options={LEVELS.map((l:{name:string;map:string[]},i:number)=>({value:String(i),label:`${s.best[i]!==null?'✓ ':''}${String(i+1).padStart(2,'0')} · ${l.name}`}))} onChange={(v:string)=>dispatch({type:'load',level:Number(v)})}/>}
+   side={<>
+    <div className="imm-default-only" style={{display:'flex',flexWrap:'wrap',gap:24,...neutral,marginBottom:12}}>
      <div>移动 <strong style={{color:theme.text.primary,fontSize:26}}>{s.board.moves}</strong></div>
      <div>推箱 <strong style={{color:theme.text.primary,fontSize:26}}>{s.board.pushes}</strong></div>
      <div>本次最佳 <strong style={{color:theme.text.primary,fontSize:26}}>{s.best[s.level]??'—'}</strong></div>
     </div>
-   </div>
-  </Section>
-  <Section heading={`${String(s.level+1).padStart(2,'0')} / 08 · ${LEVELS[s.level].name}`}>
-   <div style={{display:'flex',flexWrap:'wrap',gap:28,alignItems:'start'}}>
-    <div style={{flex:'2 1 300px',minWidth:0}}>
-     <div role="img" aria-label={`推箱子棋盘，已完成 ${placed}/${map.goals.length} 个目标`} style={{display:'grid',gridTemplateColumns:`repeat(${map.w},minmax(0,1fr))`,gap:3,padding:8,background:theme.bg.subtle,border:`1px solid ${theme.border.default}`,borderRadius:12}}>
+    <div aria-live="polite" style={{color:theme.text.primary,minHeight:70}}>
+      <div style={{fontSize:24,fontWeight:600}}>{clear?(s.level===7?'全部挑战完成！':'漂亮，仓库整理完毕！'):'每一步，都要留条退路。'}</div>
+      <div style={{...neutral,marginTop:8}}>{clear?`本关 ${s.board.moves} 步 / ${s.board.pushes} 次推箱。${s.level===7?'可以重新挑战，刷新最佳步数。':'准备好进入下一间仓库了吗？'}`:'箱子只能推，不能拉。陷入死角时，撤销一步就好。'}</div>
+    </div>
+    {clear&&<Button label={s.level===7?'回到第 1 关':'下一关 →'} variant="primary" onClick={()=>dispatch({type:'load',level:(s.level+1)%8})}/>}
+    <div style={{display:'flex',flexWrap:'wrap',gap:8}}><Button label="撤销 · Z" disabled={!s.history.length} onClick={()=>dispatch({type:'undo'})}/><Button label="重新开始" onClick={()=>dispatch({type:'load',level:s.level})}/></div>
+    <div className="imm-inline-controls"><DPad mode="tap-repeat" disabled={clear} onDir={movePad} /></div>
+    <div style={{...neutral,fontSize:14,lineHeight:1.8}}>蓝色圆点：你<br/>交叉木箱：待搬运箱子<br/>空心圆：目标位置<br/>对勾箱子：已到位</div>
+   </>}
+   pad={<HandheldPad mode="tap-repeat" disabled={clear} onDir={movePad} actions={[{label:'撤销',ariaLabel:'撤销',onPress:()=>dispatch({type:'undo'}),disabled:!s.history.length}]} />}
+   padOverlayOnly
+   help={<Text>全屏十字键与默认页相同，按住可连移；右侧圆形键撤销。方向键或 WASD 移动。一次只能推一个箱子；所有箱子到达目标即可通关。按 Z / U 撤销，移动被墙挡住不计步。Esc 退出全屏。关卡随时可选，最佳步数仅保留在当前页面会话，刷新后重置。</Text>}
+  >
+     <div role="img" aria-label={`推箱子棋盘，已完成 ${placed}/${map.goals.length} 个目标`} style={{display:'grid',gridTemplateColumns:`repeat(${map.w},minmax(0,1fr))`,gap:3,padding:8,background:theme.bg.subtle,border:`1px solid ${theme.border.default}`,borderRadius:12,width:immersive?fit.width:'100%',height:immersive?fit.height:undefined,boxSizing:'border-box'}}>
       {Array.from({length:map.w*map.h},(_:unknown,k:number)=>{
        const wall=map.walls.includes(k),goal=map.goals.includes(k),box=s.board.boxes.includes(k),player=s.board.p===k;
        return <div key={k} style={{aspectRatio:'1',position:'relative',display:'flex',alignItems:'center',justifyContent:'center',background:wall?theme.fill.secondary:theme.bg.base,border:wall?`1px solid ${theme.border.strong}`:`1px solid ${theme.border.subtle}`,borderRadius:4}}>
@@ -85,22 +111,6 @@ export default function App(){
        </div>;
       })}
      </div>
-     <div style={{display:'flex',flexWrap:'wrap',justifyContent:'space-between',gap:8,marginTop:12,...neutral}}><span>目标完成 {placed} / {map.goals.length}</span><span>已通关 {s.best.filter((b:number|null)=>b!==null).length} / 8</span></div>
-    </div>
-    <div style={{flex:'1 1 220px',minWidth:0,display:'grid',gap:20}}>
-     <div aria-live="polite" style={{color:theme.text.primary,minHeight:70}}>
-      <div style={{fontSize:24,fontWeight:600}}>{clear?(s.level===7?'全部挑战完成！':'漂亮，仓库整理完毕！'):'每一步，都要留条退路。'}</div>
-      <div style={{...neutral,marginTop:8}}>{clear?`本关 ${s.board.moves} 步 / ${s.board.pushes} 次推箱。${s.level===7?'可以重新挑战，刷新最佳步数。':'准备好进入下一间仓库了吗？'}`:'箱子只能推，不能拉。陷入死角时，撤销一步就好。'}</div>
-     </div>
-     {clear&&<Button label={s.level===7?'回到第 1 关':'下一关 →'} variant="primary" onClick={()=>dispatch({type:'load',level:(s.level+1)%8})}/>}
-     <div style={{display:'flex',flexWrap:'wrap',gap:8}}><Button label="撤销 · Z" disabled={!s.history.length} onClick={()=>dispatch({type:'undo'})}/><Button label="重新开始" onClick={()=>dispatch({type:'load',level:s.level})}/></div>
-     <DPad mode="tap-repeat" disabled={clear} onDir={(dir)=>{if(dir==='left')move(-1,0);if(dir==='right')move(1,0);if(dir==='up')move(0,-1);if(dir==='down')move(0,1);}} />
-     <div style={{...neutral,fontSize:14,lineHeight:1.8}}>蓝色圆点：你<br/>交叉木箱：待搬运箱子<br/>空心圆：目标位置<br/>对勾箱子：已到位</div>
-    </div>
-   </div>
-  </Section>
-  <Section heading="怎么玩">
-   <Text>方向键或 WASD 移动，也可以点方向按钮。一次只能推一个箱子；所有箱子到达目标即可通关。按 Z / U 撤销，移动被墙挡住不计步。关卡随时可选，最佳步数仅保留在当前页面会话，刷新后重置。</Text>
-  </Section>
+  </ImmersiveFrame>
  </Page>;
 }

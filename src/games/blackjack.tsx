@@ -6,8 +6,12 @@ import {
   useState,
   useCallback,
   useGrokTheme,
-  type CSSProperties
+  type CSSProperties,
+  useRef
 } from '../compat/grok-canvas';
+import { ImmersiveFrame } from '../mobile/ImmersiveFrame';
+import { useImmersivePlay } from '../mobile/immersivePlay';
+import { useStageFit } from '../mobile/useStageFit';
 
 type Suit = "S" | "H" | "D" | "C";
 type Rank = 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8 | 9 | 10 | 11 | 12 | 13;
@@ -182,6 +186,10 @@ function CardFace(props: {
 }
 
 export default function App() {
+ const stageRef=useRef<HTMLDivElement|null>(null);
+ const {active:immersive}=useImmersivePlay();
+ const fit=useStageFit(stageRef,4,3,immersive,true);
+
   const theme = useGrokTheme();
   const [bank, setBank] = useState(START_BANK);
   const [bet, setBet] = useState(50);
@@ -416,6 +424,13 @@ export default function App() {
       width="wide"
       lang="zh-Hans"
     >
+      <ImmersiveFrame
+        layout="banded"
+        stageRef={stageRef}
+        scrollStage
+        intro={<Text>手机可点「全屏游玩」：牌桌尽量铺满屏幕，保留要牌、停牌与加倍。不强加方向键。</Text>}
+      >
+
       <Section>
         <Text>
           这是休闲记分小游戏，筹码仅用于记分，不涉及真实金钱或下注。每局用一副 52 张洗好的新牌。点数最接近 21 且不爆牌者赢；天然二十一（首两张恰好 21）赔付 3:2。
@@ -504,11 +519,13 @@ export default function App() {
         </div>
       </Section>
 
-      <Section heading="规则说明">
+      <div className="imm-help"><Section heading="规则说明">
         <Text>
           每局独立洗一副 52 张牌。A 可算 11 点，若算 11 会爆牌则改算 1 点；J/Q/K 算 10 点。你可要牌、停牌；仅首两张且筹码足够时可加倍（注码翻倍后只再要一张即停）。庄家明一暗一，轮到庄家后按规抓牌，软 17 与硬 17 均停牌。首两张即为 21 为天然二十一，赔 3:2；双方都是则平局。普通胜局按 1:1 赔付。本版不含分牌与保险。筹码不足最低注额 10 时需重新开始。
         </Text>
-      </Section>
+      </Section></div>
+    
+      </ImmersiveFrame>
     </Page>
   );
 }

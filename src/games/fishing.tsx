@@ -11,6 +11,9 @@ import {
   type CSSProperties,
   type PointerEvent
 } from '../compat/grok-canvas';
+import { ImmersiveFrame } from '../mobile/ImmersiveFrame';
+import { useImmersivePlay } from '../mobile/immersivePlay';
+import { useStageFit } from '../mobile/useStageFit';
 
 type Phase = 'idle' | 'charge' | 'wait' | 'bite' | 'fight' | 'result';
 
@@ -46,6 +49,10 @@ function pickFish(power: number): Fish {
 }
 
 export default function App() {
+ const stageRef=useRef<HTMLDivElement|null>(null);
+ const {active:immersive}=useImmersivePlay();
+ const fit=useStageFit(stageRef,4,3,immersive,true);
+
   const theme = useGrokTheme();
   const [phase, setPhase] = useState<Phase>('idle');
   const [power, setPower] = useState(0);
@@ -276,6 +283,12 @@ export default function App() {
       width="wide"
       lang="zh-Hans"
     >
+      <ImmersiveFrame
+        layout="banded"
+        stageRef={stageRef}
+        intro={<Text>手机可点「全屏游玩」：池塘铺满屏幕，保留抛竿、提竿与收线操作。不强加方向键。</Text>}
+      >
+
       <Section>
         <Text>
           按住抛竿蓄力后松手，浮漂落入池中。看到咬钩提示时立刻提竿，然后按住收线，把张力保持在绿色区间，把进度条拉满即可收鱼。不同鱼的分数和挣扎程度不同。
@@ -422,11 +435,13 @@ export default function App() {
           </div>
         ) : null}
       </Section>
-      <Section heading="规则说明">
+      <div className="imm-help"><Section heading="规则说明">
         <Text>
           循环为：蓄力抛竿 → 等待咬钩 → 在短暂窗口内提竿 → 收线对抗 → 成功或失败后可再抛。提竿过早、错过窗口、张力顶满断线，或张力过低太久，都会让鱼逃走且不得分。收线时只有张力落在绿色区间才会增加进度。鱼类包括小鲫鱼、鲤鱼、草鱼、黑鱼和较稀有的金鲤，分数分别为 10、25、40、70、150；蓄力在中高段时更容易遇到高分鱼。这是反应与节奏小游戏，不含真实地点或付费内容。
         </Text>
-      </Section>
+      </Section></div>
+    
+      </ImmersiveFrame>
     </Page>
   );
 }

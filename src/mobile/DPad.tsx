@@ -10,6 +10,7 @@ export type PadDirConfig = {
   onUp?: () => void;
   label?: string;
   ariaLabel?: string;
+  disabled?: boolean;
 };
 
 type Props = {
@@ -46,13 +47,14 @@ export function DPad(props: Props) {
         const mode = cfg?.mode ?? fallbackMode;
         const label = cfg?.label ?? cell.label;
         const aria = cfg?.ariaLabel ?? cell.aria;
+        const disabled = props.disabled || !!cfg?.disabled;
         if (mode === 'hold') {
           return (
             <HoldButton
               key={dir}
               label={label}
               ariaLabel={aria}
-              disabled={props.disabled}
+              disabled={disabled}
               onDown={() => {
                 cfg?.onDown?.();
                 props.onDir?.(dir, true);
@@ -69,7 +71,7 @@ export function DPad(props: Props) {
             key={dir}
             label={label}
             ariaLabel={aria}
-            disabled={props.disabled}
+            disabled={disabled}
             repeat={mode === 'tap-repeat'}
             onPress={() => {
               cfg?.onPress?.();

@@ -7,8 +7,12 @@ import {
   useCallback,
   useMemo,
   useGrokTheme,
-  type CSSProperties
+  type CSSProperties,
+  useRef
 } from '../compat/grok-canvas';
+import { ImmersiveFrame } from '../mobile/ImmersiveFrame';
+import { useImmersivePlay } from '../mobile/immersivePlay';
+import { useStageFit } from '../mobile/useStageFit';
 
 type Side = 'r' | 'b';
 type Kind =
@@ -209,6 +213,10 @@ function keyOf(r: number, c: number): string {
 }
 
 export default function App() {
+ const stageRef=useRef<HTMLDivElement|null>(null);
+ const {active:immersive}=useImmersivePlay();
+ const fit=useStageFit(stageRef,5,12,immersive,true);
+
   const theme = useGrokTheme();
   const [board, setBoard] = useState<Board>(() => newBoard());
   const [turn, setTurn] = useState<0 | 1>(0);
@@ -369,6 +377,12 @@ export default function App() {
       width="wide"
       lang="zh-Hans"
     >
+      <ImmersiveFrame
+        layout="banded"
+        stageRef={stageRef}
+        intro={<Text>手机可点「全屏游玩」：棋盘铺满屏幕，点选翻棋与走子。不强加方向键。</Text>}
+      >
+
       <Section>
         <Text>
           这是常见的双人翻棋暗棋玩法，不是带铁路大本营的完整陆战棋。先手翻开的颜色归先手，之后双方轮流：翻一张暗棋，或移动/攻击已翻开的已方棋。吃掉对方军旗即胜。
@@ -459,11 +473,13 @@ export default function App() {
           )}
         </div>
       </Section>
-      <Section heading="本页公开的翻棋规则">
+      <div className="imm-help"><Section heading="本页公开的翻棋规则">
         <Text>
           棋盘为 6×6，红蓝各 18 枚全部覆置洗乱：司令、军长、师长、旅长、团长、营长各 1，连长、排长、工兵、炸弹、地雷各 2，军旗 1。先手翻开的第一枚决定自己的颜色，另一色归后手。每回合只能选一项：翻开任意一张暗棋；或将己方明棋沿横纵邻格移到空位；或攻击横纵相邻且已翻开的敌棋。不能对暗棋盲打，也不能斜走。地雷与军旗不能移动。吃子：司令＞军长＞师长＞旅长＞团长＞营长＞连长＞排长＞工兵，大吃小；同级双亡。炸弹与任何棋（含地雷、军旗）同归于尽。只有工兵能排掉地雷，其他非炸弹棋子撞雷则自己阵亡、地雷留存。攻击军旗成功（含炸弹与军旗同归，因军旗离盘）即获胜。司令被吃掉后，若该方军旗仍是暗棋则立刻翻开公开。若一方行棋时既无暗棋可翻也无法移动或攻击，则判负。
         </Text>
-      </Section>
+      </Section></div>
+    
+      </ImmersiveFrame>
     </Page>
   );
 }

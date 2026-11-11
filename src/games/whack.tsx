@@ -8,8 +8,15 @@ import {
   useRef,
   useEffect
 } from '../compat/grok-canvas';
+import { ImmersiveFrame } from '../mobile/ImmersiveFrame';
+import { useImmersivePlay } from '../mobile/immersivePlay';
+import { useStageFit } from '../mobile/useStageFit';
 type Hole = { until:number; hitUntil:number };
 export default function App(){
+ const stageRef=useRef<HTMLDivElement|null>(null);
+ const {active:immersive}=useImmersivePlay();
+ const fit=useStageFit(stageRef,3,3,immersive,true);
+
  const t=useGrokTheme();
  const [holes,setHoles]=useState<Hole[]>(Array.from({length:9},()=>({until:0,hitUntil:0})));
  const [running,setRunning]=useState(false); const [remaining,setRemaining]=useState(30); const [score,setScore]=useState(0); const [miss,setMiss]=useState(0); const [best,setBest]=useState(0); const [played,setPlayed]=useState(false);
@@ -18,8 +25,16 @@ export default function App(){
  function start(){const now=Date.now();const hs=Array.from({length:9},()=>({until:0,hitUntil:0}));game.current={holes:hs,end:now+30000,next:now+300,score:0,miss:0,running:true};setHoles(hs);setRemaining(30);setScore(0);setMiss(0);setPlayed(true);setRunning(true);}
  function hit(i:number){const g=game.current;const now=Date.now();if(!g.running||now>=g.end)return; const h=g.holes[i];if(h.until>now){h.until=0;h.hitUntil=now+250;g.score+=10;setScore(g.score);setBest((b:number)=>Math.max(b,g.score));}else if(h.hitUntil<=now){g.miss++;setMiss(g.miss);}setHoles(g.holes.map((a:Hole)=>({...a})));}
  return <Page title="打地鼠" width="wide" lang="zh-Hans" summary="30 秒眼疾手快挑战：点中探头的小地鼠，每只 +10 分。越到后面，它们越快。">
+      <ImmersiveFrame
+        layout="banded"
+        stageRef={stageRef}
+        intro={<Text>手机可点「全屏游玩」：场地铺满屏幕，点洞打击。不强加方向键。</Text>}
+      >
+
  <Section><div style={{fontFamily:t.font.family,color:t.text.primary,display:'flex',flexWrap:'wrap',gap:24,alignItems:'center'}}><span>得分 <strong>{score}</strong></span><span>失误 <strong>{miss}</strong></span><span>剩余 <strong>{remaining} 秒</strong></span><span>本页最高 <strong>{best}</strong></span><Button label={running?'重新开局':played?'再来一局':'开始游戏'} variant="primary" onClick={start}/></div></Section>
  <Section><div style={{height:5,background:t.bg.subtle,marginBottom:20}}><div style={{height:'100%',width:`${remaining/30*100}%`,background:t.dataviz.categorical[0],transition:'width .2s'}}/></div>
  <div style={{display:'grid',gridTemplateColumns:'repeat(3,minmax(0,1fr))',gap:8,userSelect:'none'}}>{holes.map((h:Hole,i:number)=>{const up=h.until>Date.now();const bonk=h.hitUntil>Date.now();return <button key={i} type="button" aria-label={`洞 ${i+1}${up?'：地鼠出现':''}`} disabled={!running} onClick={()=>hit(i)} style={{padding:0,border:`1px solid ${t.border.subtle}`,background:t.bg.base,color:t.text.primary,touchAction:'manipulation',cursor:running?'crosshair':'default',borderRadius:12,overflow:'hidden'}}><svg viewBox="0 0 240 180" width="100%" style={{display:'block'}} role="img" aria-label={bonk?'命中':up?'小地鼠':'空洞'}><ellipse cx="120" cy="142" rx="82" ry="26" fill={t.fill.secondary}/><ellipse cx="120" cy="140" rx="70" ry="19" fill={t.text.tertiary}/>{(up||bonk)&&<g><ellipse cx="120" cy="123" rx="47" ry="39" fill={t.dataviz.categorical[1]}/><circle cx="83" cy="77" r="17" fill={t.dataviz.categorical[1]}/><circle cx="157" cy="77" r="17" fill={t.dataviz.categorical[1]}/><ellipse cx="120" cy="99" rx="47" ry="43" fill={t.dataviz.categorical[1]}/><ellipse cx="120" cy="116" rx="28" ry="22" fill={t.bg.base}/>{bonk?<g stroke={t.text.primary} strokeWidth="4" fill="none"><path d="M94 91l11 10m0-10l-11 10M135 91l11 10m0-10l-11 10"/></g>:<g fill={t.text.primary}><circle cx="101" cy="96" r="5"/><circle cx="139" cy="96" r="5"/></g>}<ellipse cx="120" cy="109" rx="8" ry="6" fill={t.text.primary}/><path d="M109 120Q120 133 131 120" stroke={t.text.primary} strokeWidth="3" fill="none"/><path d="M115 122v7h10v-7" fill={t.bg.base}/><ellipse cx="83" cy="139" rx="17" ry="9" fill={t.dataviz.categorical[1]}/><ellipse cx="157" cy="139" rx="17" ry="9" fill={t.dataviz.categorical[1]}/></g>}<path d="M39 143 Q120 178 201 143" fill="none" stroke={t.fill.secondary} strokeWidth="12"/>{bonk&&<text x="120" y="41" textAnchor="middle" fill={t.text.primary} fontFamily={t.font.family} fontSize="24" fontWeight="600">+10</text>}<text x="218" y="24" textAnchor="end" fill={t.text.tertiary} fontFamily={t.font.family} fontSize="14">{i+1}</text></svg></button>;})}</div>
- </Section><Section><Text>{running?'地鼠逃走或点到空洞，都记一次失误；命中后的短暂动画不会重复计分。':played?`本局结束！你得到 ${score} 分，失误 ${miss} 次。点击「再来一局」挑战最高分。`:'准备好了吗？点击开始，用鼠标或手指轻点地鼠。每局 30 秒，最高分在当前页面会话内保留。'}</Text></Section></Page>;
+ </Section><Section><Text>{running?'地鼠逃走或点到空洞，都记一次失误；命中后的短暂动画不会重复计分。':played?`本局结束！你得到 ${score} 分，失误 ${miss} 次。点击「再来一局」挑战最高分。`:'准备好了吗？点击开始，用鼠标或手指轻点地鼠。每局 30 秒，最高分在当前页面会话内保留。'}</Text></Section>
+      </ImmersiveFrame>
+    </Page>;
 }

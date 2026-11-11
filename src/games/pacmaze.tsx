@@ -9,6 +9,10 @@ import {
   useState
 } from '../compat/grok-canvas';
 import { DPad } from '../mobile/DPad';
+import { HandheldPad } from '../mobile/HandheldPad';
+import { ImmersiveFrame } from '../mobile/ImmersiveFrame';
+import { useImmersivePlay } from '../mobile/immersivePlay';
+import { useStageFit } from '../mobile/useStageFit';
 import { swipeDirection } from '../mobile/swipe';
 type Actor={x:number;y:number;dir:number;homeX:number;homeY:number;wait:number};
 const N=21,T=24,D=[[0,-1],[1,0],[0,1],[-1,0]];
@@ -20,8 +24,10 @@ function makeMaze(){
  return m;
 }
 export default function App(){
- const theme=useGrokTheme(),canvas=useRef<HTMLCanvasElement|null>(null),command=useRef<(s:string)=>void>(()=>{}),swipeAt=useRef<{x:number;y:number}|null>(null);
+ const theme=useGrokTheme(),canvas=useRef<HTMLCanvasElement|null>(null),command=useRef<(s:string)=>void>(()=>{}),swipeAt=useRef<{x:number;y:number}|null>(null),stageRef=useRef<HTMLDivElement|null>(null);
  const [hud,setHud]=useState({score:0,lives:3,level:1,dots:0,power:0,status:'ready'});
+ const {active:immersive}=useImmersivePlay();
+ const fit=useStageFit(stageRef,504,504,immersive,true);
  useEffect(()=>{
  const c=canvas.current;if(!c)return;const ctx=c.getContext('2d');if(!ctx)return;
  let maze=makeMaze(),dots=new Map<string,number>(),score=0,lives=3,level=1,power=0,combo=0,invuln=2,mode='ready',resume='play',clearTime=0,elapsed=0,pa=0,ga=0,last=0,frame=0,dirty=true;
@@ -48,5 +54,24 @@ export default function App(){
  const loop=(now:number)=>{const dt=last?Math.min((now-last)/1000,.06):0;last=now;if(mode==='clear'){clearTime-=dt;if(clearTime<=0){level++;fill();mode='play';dirty=true;}}else if(mode==='play'){elapsed+=dt;invuln=Math.max(0,invuln-dt);const before=Math.ceil(power);power=Math.max(0,power-dt);if(before!==Math.ceil(power))dirty=true;ghosts.forEach((g:Actor)=>{g.wait=Math.max(0,g.wait-dt);});const speed=Math.max(.078,.15-(level-1)*.009),gs=Math.max(.105,.205-(level-1)*.01)*(power>0?1.4:1);pa+=dt;ga+=dt;if(pa>=speed){pa-=speed;stepPlayer();}if(ga>=gs&&mode==='play'){ga-=gs;stepGhosts();}}if(dirty)sync();draw(now);frame=requestAnimationFrame(loop);};sync();frame=requestAnimationFrame(loop);
  return()=>{cancelAnimationFrame(frame);window.removeEventListener('keydown',key);window.removeEventListener('blur',blur);command.current=()=>{};};
  },[]);
- return <Page title="迷宫豆豆" summary="小豆怪的大冒险：收集星点，躲开四只迷路精灵。大豆入口，猎人与猎物交换角色。" width="wide" lang="zh-Hans"><Section><div style={{display:'flex',flexWrap:'wrap',gap:20,color:theme.text.primary,fontFamily:theme.font.mono,paddingBottom:16}}><span>得分 {hud.score.toString().padStart(5,'0')}</span><span>生命 {hud.lives}</span><span>关卡 {hud.level}</span><span>余豆 {hud.dots}</span><span>{hud.power>0?'反击 '+hud.power+' 秒':'大豆 = 7 秒反击'}</span></div><div style={{display:'flex',justifyContent:'center'}}><canvas ref={canvas} width={504} height={504} aria-label="迷宫豆豆游戏区域，方向键、滑动或屏幕方向按钮移动" onPointerDown={(e)=>{swipeAt.current={x:e.clientX,y:e.clientY};try{e.currentTarget.setPointerCapture(e.nativeEvent.pointerId);}catch{/* ignore */}}} onPointerUp={(e)=>{const o=swipeAt.current;swipeAt.current=null;if(!o)return;const d=swipeDirection(e.clientX-o.x,e.clientY-o.y);if(d)command.current(d);}} onPointerCancel={()=>{swipeAt.current=null;}} style={{width:'100%',maxWidth:560,height:'auto',aspectRatio:'1',imageRendering:'pixelated',borderRadius:12,touchAction:'none'}} /></div><div style={{display:'flex',flexWrap:'wrap',gap:12,justifyContent:'center',marginTop:18}}><Button label={hud.status==='ready'?'开始探险':hud.status==='pause'?'继续游戏':'暂停 / 继续'} variant="primary" disabled={hud.status==='over'} onClick={()=>command.current('pause')}/><Button label="重新开始" onClick={()=>command.current('restart')}/></div><div style={{marginTop:18}}><DPad mode="tap" onDir={(dir)=>command.current(dir)} /></div></Section><Section heading="怎么玩"><Text>方向键 / WASD 移动，空格或 P 暂停，R 重开。点一次方向按钮就会持续前进，转弯可以提前输入。小豆 10 分，大豆 50 分；反击时连续吃精灵获得 200 / 400 / 800 / 1600 分。吃完全部豆子奖励 500 分并进入更快的下一关；失去生命后短暂无敌。切离窗口自动暂停。</Text></Section></Page>;
+ return <Page title="迷宫豆豆" summary="小豆怪的大冒险：收集星点，躲开四只迷路精灵。大豆入口，猎人与猎物交换角色。" width="wide" lang="zh-Hans">
+ <ImmersiveFrame
+  layout="overlay"
+  stageRef={stageRef}
+  focusRef={canvas}
+  intro={<Text>手机可点「全屏游玩」：迷宫铺满屏幕，半透明十字键转向（点一次持续前进，转弯可提前输入）；也可在画面上滑动。电脑仍可用键盘。</Text>}
+  hudStats={<><span>得分 {hud.score.toString().padStart(5,'0')}</span><span>生命 {hud.lives}</span><span>关卡 {hud.level}</span><span>余豆 {hud.dots}</span><span>{hud.power>0?'反击 '+hud.power+' 秒':'大豆反击'}</span></>}
+  hudActions={<><Button label={hud.status==='ready'?'开始':hud.status==='pause'?'继续':'暂停'} disabled={hud.status==='over'} onClick={()=>command.current('pause')}/><Button label="重开" onClick={()=>command.current('restart')}/></>}
+  side={<>
+   <div className="imm-default-only" style={{display:'flex',flexWrap:'wrap',gap:20,color:theme.text.primary,fontFamily:theme.font.mono,paddingBottom:16}}><span>得分 {hud.score.toString().padStart(5,'0')}</span><span>生命 {hud.lives}</span><span>关卡 {hud.level}</span><span>余豆 {hud.dots}</span><span>{hud.power>0?'反击 '+hud.power+' 秒':'大豆 = 7 秒反击'}</span></div>
+   <div style={{display:'flex',flexWrap:'wrap',gap:12,marginTop:8}}><Button label={hud.status==='ready'?'开始探险':hud.status==='pause'?'继续游戏':'暂停 / 继续'} variant="primary" disabled={hud.status==='over'} onClick={()=>command.current('pause')}/><Button label="重新开始" onClick={()=>command.current('restart')}/></div>
+   <div className="imm-inline-controls" style={{marginTop:18}}><DPad mode="tap" onDir={(dir)=>command.current(dir)} /></div>
+  </>}
+  pad={<HandheldPad mode="tap" onDir={(dir)=>command.current(dir)} />}
+  padOverlayOnly
+  help={<Text>全屏十字键与默认页方向键相同：点一次就会持续前进，转弯可以提前输入；也可滑动画面。方向键 / WASD 移动，空格或 P 暂停，R 重开，Esc 退出全屏。小豆 10 分，大豆 50 分；反击时连续吃精灵获得 200 / 400 / 800 / 1600 分。吃完全部豆子奖励 500 分并进入更快的下一关；失去生命后短暂无敌。切离窗口自动暂停。</Text>}
+ >
+ <canvas ref={canvas} width={504} height={504} aria-label="迷宫豆豆游戏区域，方向键、滑动或屏幕方向按钮移动" onPointerDown={(e)=>{swipeAt.current={x:e.clientX,y:e.clientY};try{e.currentTarget.setPointerCapture(e.nativeEvent.pointerId);}catch{/* ignore */}}} onPointerUp={(e)=>{const o=swipeAt.current;swipeAt.current=null;if(!o)return;const d=swipeDirection(e.clientX-o.x,e.clientY-o.y);if(d)command.current(d);}} onPointerCancel={()=>{swipeAt.current=null;}} style={immersive?{width:fit.width,height:fit.height,maxWidth:'none',display:'block',aspectRatio:'1',imageRendering:'pixelated',borderRadius:12,touchAction:'none'}:{width:'100%',maxWidth:560,height:'auto',aspectRatio:'1',imageRendering:'pixelated',borderRadius:12,touchAction:'none'}} />
+ </ImmersiveFrame>
+ </Page>;
 }

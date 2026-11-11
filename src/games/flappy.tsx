@@ -6,11 +6,17 @@ import {
   useGrokTheme,
   Button
 } from '../compat/grok-canvas';
+import { ImmersiveFrame } from '../mobile/ImmersiveFrame';
+import { useImmersivePlay } from '../mobile/immersivePlay';
+import { useStageFit } from '../mobile/useStageFit';
 type Pipe = { x:number; y:number; counted:boolean };
 type Mode = 'ready'|'play'|'over'|'paused';
 export default function App(){
  const theme=useGrokTheme();
  const canvas=useRef<HTMLCanvasElement|null>(null);
+ const stageRef=useRef<HTMLDivElement|null>(null);
+ const {active:immersive}=useImmersivePlay();
+ const fit=useStageFit(stageRef,440,600,immersive,true);
  const game=useRef({y:260,v:0,pipes:[] as Pipe[],score:0,best:0,mode:'ready' as Mode,time:0,spawn:0,deadAt:0});
  const [hud,setHud]=useState({score:0,best:0,mode:'ready' as Mode});
  const sync=()=>{const g=game.current;setHud({score:g.score,best:g.best,mode:g.mode});};
@@ -53,5 +59,21 @@ export default function App(){
   };raf=requestAnimationFrame(frame);
   return()=>{cancelAnimationFrame(raf);window.removeEventListener('keydown',key);document.removeEventListener('visibilitychange',hide);};
  },[]);
- return <Page title="蹦跳小鸟" summary="一拍翅膀，一段冒险。穿过通道，挑战自己的最高纪录。" width="wide" lang="zh-Hans"><div style={{color:theme.text.primary,fontFamily:theme.font.family,display:'flex',flexDirection:'column',gap:16,alignItems:'center'}}><div style={{display:'flex',flexWrap:'wrap',gap:20,justifyContent:'center'}}><span>得分 {hud.score}</span><span>本次会话最佳 {hud.best}</span><span style={{color:theme.text.secondary}}>{hud.mode==='play'?'飞行中':hud.mode==='paused'?'已暂停':hud.mode==='over'?'挑战结束':'等待起飞'}</span></div><canvas ref={canvas} width={440} height={600} tabIndex={0} aria-label="蹦跳小鸟游戏区域，点击或按空格拍翅，P 暂停，R 重开" onPointerDown={(e)=>{e.preventDefault();e.currentTarget.focus();flap();}} style={{width:'100%',maxWidth:440,height:'auto',display:'block',borderRadius:16,touchAction:'none',border:'1px solid '+theme.border.default}}/><div style={{display:'flex',flexWrap:'wrap',gap:12,justifyContent:'center'}}><Button label={hud.mode==='over'?'再飞一次':'拍翅 / 起飞'} variant="primary" onClick={flap}/><Button label={hud.mode==='paused'?'继续':'暂停'} onClick={pause} disabled={hud.mode==='ready'||hud.mode==='over'}/><Button label="重新开始" onClick={reset}/></div><p style={{margin:0,color:theme.text.secondary,textAlign:'center'}}>点击、轻触或空格拍翅 · P 暂停 · R 重开<br/>别碰通道、地面和天空边缘。最高纪录仅保留在当前页面会话。</p></div></Page>;
+ return <Page title="蹦跳小鸟" summary="一拍翅膀，一段冒险。穿过通道，挑战自己的最高纪录。" width="wide" lang="zh-Hans">
+<ImmersiveFrame
+ layout="banded"
+ stageRef={stageRef}
+ focusRef={canvas}
+ intro={<p style={{margin:0,color:theme.text.secondary}}>手机可点「全屏游玩」：画面铺满屏幕，点画面或「拍翅」起飞。不强加方向键。</p>}
+ hudStats={<><span>得分 {hud.score}</span><span>最佳 {hud.best}</span><span>{hud.mode==='play'?'飞行中':hud.mode==='paused'?'已暂停':hud.mode==='over'?'挑战结束':'等待起飞'}</span></>}
+ hudActions={<><Button label={hud.mode==='over'?'再飞一次':'拍翅 / 起飞'} variant="primary" onClick={flap}/><Button label={hud.mode==='paused'?'继续':'暂停'} onClick={pause} disabled={hud.mode==='ready'||hud.mode==='over'}/><Button label="重开" onClick={reset}/></>}
+ side={<>
+  <div className="imm-default-only" style={{display:'flex',flexWrap:'wrap',gap:20,justifyContent:'center'}}><span>得分 {hud.score}</span><span>本次会话最佳 {hud.best}</span><span style={{color:theme.text.secondary}}>{hud.mode==='play'?'飞行中':hud.mode==='paused'?'已暂停':hud.mode==='over'?'挑战结束':'等待起飞'}</span></div>
+  <div style={{display:'flex',flexWrap:'wrap',gap:12,justifyContent:'center'}}><Button label={hud.mode==='over'?'再飞一次':'拍翅 / 起飞'} variant="primary" onClick={flap}/><Button label={hud.mode==='paused'?'继续':'暂停'} onClick={pause} disabled={hud.mode==='ready'||hud.mode==='over'}/><Button label="重新开始" onClick={reset}/></div>
+ </>}
+ help={<p style={{margin:0,color:theme.text.secondary,textAlign:'center'}}>全屏后点画面或拍翅按钮即可。点击、轻触或空格拍翅 · P 暂停 · R 重开 · Esc 退出全屏<br/>别碰通道、地面和天空边缘。最高纪录仅保留在当前页面会话。</p>}
+>
+<canvas ref={canvas} width={440} height={600} tabIndex={0} aria-label="蹦跳小鸟游戏区域，点击或按空格拍翅，P 暂停，R 重开" onPointerDown={(e)=>{e.preventDefault();e.currentTarget.focus();flap();}} style={immersive?{width:fit.width,height:fit.height,maxWidth:'none',display:'block',borderRadius:16,touchAction:'none',border:'1px solid '+theme.border.default}:{width:'100%',maxWidth:440,height:'auto',display:'block',borderRadius:16,touchAction:'none',border:'1px solid '+theme.border.default}}/>
+</ImmersiveFrame>
+</Page>;
 }

@@ -6,9 +6,14 @@ import {
   useState,
   Button
 } from '../compat/grok-canvas';
+import { ImmersiveFrame } from '../mobile/ImmersiveFrame';
+import { useImmersivePlay } from '../mobile/immersivePlay';
+import { useStageFit } from '../mobile/useStageFit';
 type P={x:number;y:number;r:number;c:string};
 export default function App(){
- const theme=useGrokTheme(); const ref=useRef<HTMLCanvasElement|null>(null); const control=useRef<{reset:()=>void}>({reset:()=>{}}); const [score,setScore]=useState(0); const [best,setBest]=useState(0);
+ const theme=useGrokTheme(); const ref=useRef<HTMLCanvasElement|null>(null); const stageRef=useRef<HTMLDivElement|null>(null); const control=useRef<{reset:()=>void}>({reset:()=>{}}); const [score,setScore]=useState(0); const [best,setBest]=useState(0);
+ const {active:immersive}=useImmersivePlay();
+ const fit=useStageFit(stageRef,760,660,immersive,true);
  useEffect(()=>{const canvas=ref.current;if(!canvas)return;const ctx=canvas.getContext('2d');if(!ctx)return;let raf=0,dead=false,charging=false,start=0,power=0,flight=false,jumpStart=0,fromX=0,fromY=0,toX=0,toY=0,px=0,py=0,z=0,camX=0,camY=0,points=0,record=0,combo=0,fall=0,last=performance.now(),message='按住蓄力 · 松开起跳',msgUntil=0;let platforms:P[]=[],current=0;let particles:{x:number;y:number;vx:number;vy:number;life:number}[]=[];
  try{record=Number(localStorage.getItem('hop-original-best')||0)||0;setBest(record);}catch{}
  const palette=['#70d4bc','#f6bb78','#a5abec','#ef9aa8'];
@@ -37,5 +42,21 @@ export default function App(){
  if(dead){ctx.fillStyle='#111d2acc';ctx.fillRect(0,0,w,h);ctx.textAlign='center';ctx.fillStyle='#f5efe1';ctx.font='bold 36px sans-serif';ctx.fillText('本次 '+points+' 分',w/2,280);ctx.font='18px sans-serif';ctx.fillText(message,w/2,325);ctx.fillStyle='#9cafc3';ctx.font='15px sans-serif';ctx.fillText('点击下方重新开始，或按 R',w/2,362);}raf=requestAnimationFrame(draw);};raf=requestAnimationFrame(draw);
  return()=>{cancelAnimationFrame(raf);canvas.removeEventListener('pointerdown',pd);canvas.removeEventListener('pointerup',pu);canvas.removeEventListener('pointercancel',cancel);canvas.removeEventListener('lostpointercapture',cancel);canvas.removeEventListener('keydown',kd);canvas.removeEventListener('keyup',ku);window.removeEventListener('blur',blur);};
  },[]);
- return <Page title="跳一跳" width="wide" lang="zh-Hans" summary="原创漂浮岛挑战。按住蓄力，松开起跳；落在中心，连续加分。"><div style={{display:'flex',flexWrap:'wrap',gap:18,alignItems:'center',color:theme.text.primary,fontFamily:theme.font.family,marginBottom:16}}><span>得分 {score}</span><span>最佳 {best}</span><Button label="重新开始" onClick={()=>{control.current.reset();ref.current?.focus();}}/></div><canvas ref={ref} width={760} height={660} tabIndex={0} aria-label="跳一跳游戏区：按住鼠标、触屏或空格蓄力，松开跳跃。R 重新开始。" style={{display:'block',width:'100%',maxHeight:'78vh',objectFit:'contain',background:theme.bg.subtle,touchAction:'none',borderRadius:12,outlineColor:theme.border.focus}}/><p style={{color:theme.text.secondary,fontFamily:theme.font.family,fontSize:14}}>先点游戏区再使用空格。蓄力越久跳得越远，满格不一定刚好！中心连击每次递增奖励；偏离中心会重置连击。最佳成绩在浏览器允许时保存在本机。</p></Page>;
+ return <Page title="跳一跳" width="wide" lang="zh-Hans" summary="原创漂浮岛挑战。按住蓄力，松开起跳；落在中心，连续加分。">
+ <ImmersiveFrame
+  layout="banded"
+  stageRef={stageRef}
+  focusRef={ref}
+  intro={<p style={{color:theme.text.secondary,fontFamily:theme.font.family,fontSize:14}}>手机可点「全屏游玩」：画面铺满屏幕，按住画面蓄力、松开起跳。不强加方向键。最佳成绩在浏览器允许时保存在本机。</p>}
+  hudStats={<><span>得分 {score}</span><span>最佳 {best}</span></>}
+  hudActions={<Button label="重开" onClick={()=>{control.current.reset();ref.current?.focus();}}/>}
+  side={<>
+   <div className="imm-default-only" style={{display:'flex',flexWrap:'wrap',gap:18,alignItems:'center',marginBottom:8}}><span>得分 {score}</span><span>最佳 {best}</span></div>
+   <Button label="重新开始" onClick={()=>{control.current.reset();ref.current?.focus();}}/>
+  </>}
+  help={<p style={{color:theme.text.secondary,fontFamily:theme.font.family,fontSize:14}}>全屏后按住画面或空格蓄力，松开跳跃。R 重新开始，Esc 退出全屏。蓄力越久跳得越远，满格不一定刚好！中心连击每次递增奖励；偏离中心会重置连击。最佳成绩在浏览器允许时保存在本机。</p>}
+ >
+ <canvas ref={ref} width={760} height={660} tabIndex={0} aria-label="跳一跳游戏区：按住鼠标、触屏或空格蓄力，松开跳跃。R 重新开始。" style={immersive?{display:'block',width:fit.width,height:fit.height,maxWidth:'none',maxHeight:'none',objectFit:'contain',background:theme.bg.subtle,touchAction:'none',borderRadius:12,outlineColor:theme.border.focus}:{display:'block',width:'100%',maxHeight:'78vh',objectFit:'contain',background:theme.bg.subtle,touchAction:'none',borderRadius:12,outlineColor:theme.border.focus}}/>
+ </ImmersiveFrame>
+ </Page>;
 }

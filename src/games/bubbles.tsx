@@ -11,6 +11,9 @@ import {
   type CSSProperties,
   type PointerEvent
 } from '../compat/grok-canvas';
+import { ImmersiveFrame } from '../mobile/ImmersiveFrame';
+import { useImmersivePlay } from '../mobile/immersivePlay';
+import { useStageFit } from '../mobile/useStageFit';
 
 const EVEN_COLS = 8;
 const ODD_COLS = 7;
@@ -258,6 +261,10 @@ function aimPoints(sx: number, sy: number, angle: number): { x: number; y: numbe
 }
 
 export default function App() {
+ const stageRef=useRef<HTMLDivElement|null>(null);
+ const {active:immersive}=useImmersivePlay();
+ const fit=useStageFit(stageRef,420,640,immersive,true);
+
   const theme = useGrokTheme();
   const palette = theme.dataviz.categorical;
   const svgRef = useRef<SVGSVGElement | null>(null);
@@ -422,6 +429,12 @@ export default function App() {
       width="wide"
       lang="zh-Hans"
     >
+      <ImmersiveFrame
+        layout="banded"
+        stageRef={stageRef}
+        intro={<Text>手机可点「全屏游玩」：场地铺满屏幕，按住瞄准、松开发射。不强加方向键。</Text>}
+      >
+
       <Section>
         <Text>
           在场地内移动指针或手指瞄准，按下并松开即可发射。泡泡碰到左右墙会反弹，撞上已有泡泡后吸附到六邻接格子。三个或以上同色相连会消除，之后不再连着顶部的泡泡整簇掉落。
@@ -551,11 +564,13 @@ export default function App() {
           </svg>
         </div>
       </Section>
-      <Section heading="规则说明">
+      <div className="imm-help"><Section heading="规则说明">
         <Text>
           场地是六邻接（蜂窝）网格：偶数行 8 列，奇数行 7 列并半格错开。发射轨迹可在左右墙之间反弹。泡泡吸附后，若与邻接的同色泡泡连成至少三颗则全部消除；消除后，任何不再通过邻接关系连到顶行的泡泡都会掉落并计分。消除每颗 10 分，掉落每颗 20 分。若有泡泡落到最底行虚线位置，判定失败；全部清空则胜利。下一发颜色只从场上仍有的颜色中抽取。本页为单局随机开局，可随时重开。
         </Text>
-      </Section>
+      </Section></div>
+    
+      </ImmersiveFrame>
     </Page>
   );
 }

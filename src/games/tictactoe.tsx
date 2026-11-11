@@ -6,8 +6,12 @@ import {
   Segmented,
   useState,
   useEffect,
-  useGrokTheme
+  useGrokTheme,
+  useRef
 } from '../compat/grok-canvas';
+import { ImmersiveFrame } from '../mobile/ImmersiveFrame';
+import { useImmersivePlay } from '../mobile/immersivePlay';
+import { useStageFit } from '../mobile/useStageFit';
 type Mark = 'X' | 'O';
 type Cell = Mark | null;
 type Mode = 'ai' | 'pvp';
@@ -40,6 +44,10 @@ function bestMove(board: Cell[], ai: Mark): number {
   return move;
 }
 export default function App() {
+ const stageRef=useRef<HTMLDivElement|null>(null);
+ const {active:immersive}=useImmersivePlay();
+ const fit=useStageFit(stageRef,3,3,immersive,true);
+
   const t = useGrokTheme();
   const [mode,setMode] = useState<Mode>('ai');
   const [human,setHuman] = useState<Mark>('X');
@@ -67,6 +75,12 @@ export default function App() {
   const label = (m: Mark): string => mode === 'pvp' ? '玩家 '+m : m === human ? '你 · '+m : 'AI · '+m;
   const status = r.winner ? label(r.winner)+' 获胜' : r.draw ? '平局，再来一局？' : thinking ? 'AI 正在思考…' : '轮到 '+label(turn);
   return <Page title="井字棋" width="wide" lang="zh-Hans" summary="三子连线即胜。双人同屏，或挑战不会输的 Minimax AI。">
+      <ImmersiveFrame
+        layout="banded"
+        stageRef={stageRef}
+        intro={<Text>手机可点「全屏游玩」：棋盘铺满屏幕，点格落子。不强加方向键。</Text>}
+      >
+
     <Section heading="对局设置">
       <div style={{display:'flex',flexWrap:'wrap',gap:16,alignItems:'center',color:t.text.primary,fontFamily:t.font.family}}>
         <Segmented<Mode> value={mode} options={[{value:'ai',label:'挑战 AI'},{value:'pvp',label:'双人对战'}]} onChange={(v: Mode) => {setMode(v);clear();}} />
@@ -88,6 +102,8 @@ export default function App() {
         {[{name:label('X'),value:scores.X},{name:'平局',value:scores.draw},{name:label('O'),value:scores.O}].map((s: {name:string;value:number}) => <div key={s.name} style={{borderTop:'1px solid '+t.border.default,paddingTop:16}}><div style={{fontSize:32,fontWeight:600}}>{s.value}</div><div style={{fontSize:14,color:t.text.secondary}}>{s.name}</div></div>)}
       </div>
     </Section>
-    <Section heading="玩法"><Text>X 先手，横、竖或斜线连成三个棋子获胜。点击或触碰格子落子；也可用 Tab 选择、回车或空格落子。切换模式或执子会重置比分，刷新页面不保留战绩。</Text></Section>
-  </Page>;
+    <div className="imm-help"><Section heading="玩法"><Text>X 先手，横、竖或斜线连成三个棋子获胜。点击或触碰格子落子；也可用 Tab 选择、回车或空格落子。切换模式或执子会重置比分，刷新页面不保留战绩。</Text></Section></div>
+  
+      </ImmersiveFrame>
+    </Page>;
 }

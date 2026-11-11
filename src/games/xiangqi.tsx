@@ -7,8 +7,12 @@ import {
   useCallback,
   useMemo,
   useGrokTheme,
-  type CSSProperties
+  type CSSProperties,
+  useRef
 } from '../compat/grok-canvas';
+import { ImmersiveFrame } from '../mobile/ImmersiveFrame';
+import { useImmersivePlay } from '../mobile/immersivePlay';
+import { useStageFit } from '../mobile/useStageFit';
 
 type Side = 'r' | 'b';
 type Kind = 'K' | 'A' | 'E' | 'H' | 'R' | 'C' | 'P';
@@ -246,6 +250,10 @@ function keyOf(r: number, c: number): string {
 }
 
 export default function App() {
+ const stageRef=useRef<HTMLDivElement|null>(null);
+ const {active:immersive}=useImmersivePlay();
+ const fit=useStageFit(stageRef,9,10,immersive,true);
+
   const theme = useGrokTheme();
   const [board, setBoard] = useState<Board>(() => initialBoard());
   const [turn, setTurn] = useState<Side>('r');
@@ -352,6 +360,12 @@ export default function App() {
       width="wide"
       lang="zh-Hans"
     >
+      <ImmersiveFrame
+        layout="banded"
+        stageRef={stageRef}
+        intro={<Text>手机可点「全屏游玩」：棋盘铺满屏幕，点选走子。不强加方向键。</Text>}
+      >
+
       <Section>
         <Text>
           红黑轮流，红方先行。点选自己的棋子后，可走的交叉点会高亮，再点目标完成走子。不能走导致自己被将军或将帅照面的棋。本页为人人对战，不带人机。
@@ -463,11 +477,13 @@ export default function App() {
           )}
         </svg>
       </Section>
-      <Section heading="规则说明">
+      <div className="imm-help"><Section heading="规则说明">
         <Text>
           棋盘为九路十行，红在下方先行。帅/将只在九宫内直走一格；双方将帅不能在同一直线上面对面（中间无子）。仕/士斜走一格且不出九宫。相/象斜走两格（田字），若象眼有子则不能走，且不能过河。马走日字，蹩马腿则不能走。车沿直线走任意格，不能跳子。炮不吃子时与车相同；吃子须隔且只隔一个棋子（炮架）。兵/卒未过河只能向前一格，过河后可左右一格，不能后退。被将军必须应将；无法应将为将死，对方胜。无将但无任何合法着法为困毙，亦判负。本页不自动裁决长将、长捉等循环着法，遇到循环对峙可自行协商或重开。未加入人机，以免给出不可靠的棋力。
         </Text>
-      </Section>
+      </Section></div>
+    
+      </ImmersiveFrame>
     </Page>
   );
 }

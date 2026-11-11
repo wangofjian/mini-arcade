@@ -7,6 +7,10 @@ import {
   Button,
   type PointerEvent
 } from '../compat/grok-canvas';
+import { HandheldPad } from '../mobile/HandheldPad';
+import { ImmersiveFrame } from '../mobile/ImmersiveFrame';
+import { useImmersivePlay } from '../mobile/immersivePlay';
+import { useStageFit } from '../mobile/useStageFit';
 type Tile = { id: number; value: number; r: number; c: number; fresh?: boolean; merged?: boolean };
 type Game = { tiles: Tile[]; score: number; moves: number; continued: boolean };
 type Dir = 'up' | 'down' | 'left' | 'right';
@@ -43,6 +47,9 @@ function slide(tiles:Tile[],dir:Dir) {
 const colors:Record<number,string>={2:'#ece5d9',4:'#e5d4b4',8:'#f3b477',16:'#ee9462',32:'#ec765c',64:'#dc5747',128:'#d9b74c',256:'#cfa035',512:'#b88a27',1024:'#a6751c',2048:'#896119'};
 export default function App(){
  const theme=useGrokTheme();
+ const stageRef=useRef<HTMLDivElement|null>(null);
+ const {active:immersive}=useImmersivePlay();
+ const fit=useStageFit(stageRef,1,1,immersive,true);
  const [game,setGame]=useState<Game>(()=>start());
  const [visual,setVisual]=useState<Tile[]|null>(null);
  const [best,setBest]=useState(0);const [undo,setUndo]=useState<Game|null>(null);
@@ -79,31 +86,38 @@ export default function App(){
  const tiles=visual||game.tiles;
  return <Page title="2048" summary="滑动、合并，再来一步。把相同数字拼成 2048。" width="wide" lang="zh-Hans">
  <style>{`@keyframes tileAppear{0%{transform:scale(.65);opacity:.25}100%{transform:scale(1);opacity:1}}@keyframes tileMerge{0%{transform:scale(.9)}55%{transform:scale(1.13)}100%{transform:scale(1)}}@keyframes gainFloat{0%{opacity:1;transform:translateY(3px)}100%{opacity:0;transform:translateY(-20px)}}.tile2048{transition:left 140ms cubic-bezier(.2,.7,.2,1),top 140ms cubic-bezier(.2,.7,.2,1)}.control2048:active{transform:scale(.94)}@media(prefers-reduced-motion:reduce){.tile2048{transition:none}.face2048{animation:none!important}}`}</style>
- <div style={{display:'flex',flexWrap:'wrap',gap:36,alignItems:'flex-start',fontFamily:theme.font.family,color:theme.text.primary}}>
- <div style={{flex:'1 1 320px',maxWidth:520,minWidth:0}}>
- <div style={{display:'flex',flexWrap:'wrap',gap:24,alignItems:'center',marginBottom:18}}>
- <div><div style={{fontSize:12,color:theme.text.secondary,letterSpacing:1}}>得分</div><div style={{fontSize:32,fontWeight:600,fontVariantNumeric:'tabular-nums',position:'relative'}} aria-live="polite">{game.score.toLocaleString()}{gain>0&&<span key={game.moves} style={{position:'absolute',left:'100%',top:0,fontSize:17,animation:'gainFloat 950ms ease-out forwards',paddingLeft:8}}>+{gain}</span>}</div></div>
- <div><div style={{fontSize:12,color:theme.text.secondary,letterSpacing:1}}>本次最佳</div><div style={{fontSize:32,fontWeight:600,fontVariantNumeric:'tabular-nums'}}>{best.toLocaleString()}</div></div>
- <div style={{marginLeft:'auto',fontSize:13,color:theme.text.tertiary}}>{game.moves} 步</div>
- </div>
- <div onPointerDown={swipeStart} onPointerUp={swipeEnd} onPointerCancel={()=>{origin.current=null;}} onLostPointerCapture={()=>{origin.current=null;}} aria-label="2048 游戏棋盘，可在棋盘上滑动" style={{touchAction:'none',position:'relative',width:'100%',aspectRatio:'1',background:theme.bg.subtle,border:`1px solid ${theme.border.default}`,borderRadius:18,padding:6,boxSizing:'border-box',userSelect:'none'}}>
+ <ImmersiveFrame
+  layout="overlay"
+  stageRef={stageRef}
+  intro={<p style={{fontSize:15,lineHeight:1.8,color:theme.text.secondary,margin:'0 0 8px'}}>手机可点「全屏游玩」：棋盘铺满屏幕，半透明十字键滑动合并；也可直接在棋盘上滑动。电脑仍可用键盘。</p>}
+  hudStats={<><span><small>得分</small>{game.score.toLocaleString()}</span><span><small>最佳</small>{best.toLocaleString()}</span><span><small>步数</small>{game.moves}</span></>}
+  hudActions={<><Button label="新游戏" variant="primary" onClick={reset}/><Button label="撤销" onClick={rewind} disabled={!undo||busy}/></>}
+  side={<>
+   <div className="imm-default-only" style={{display:'flex',flexWrap:'wrap',gap:24,alignItems:'center',marginBottom:18}}>
+    <div><div style={{fontSize:12,color:theme.text.secondary,letterSpacing:1}}>得分</div><div style={{fontSize:32,fontWeight:600,fontVariantNumeric:'tabular-nums',position:'relative'}} aria-live="polite">{game.score.toLocaleString()}{gain>0&&<span key={game.moves} style={{position:'absolute',left:'100%',top:0,fontSize:17,animation:'gainFloat 950ms ease-out forwards',paddingLeft:8}}>+{gain}</span>}</div></div>
+    <div><div style={{fontSize:12,color:theme.text.secondary,letterSpacing:1}}>本次最佳</div><div style={{fontSize:32,fontWeight:600,fontVariantNumeric:'tabular-nums'}}>{best.toLocaleString()}</div></div>
+    <div style={{marginLeft:'auto',fontSize:13,color:theme.text.tertiary}}>{game.moves} 步</div>
+   </div>
+   <div style={{display:'flex',flexWrap:'wrap',gap:10,marginTop:8}}><Button label="新游戏" variant="primary" onClick={reset}/><Button label="撤销一步" onClick={rewind} disabled={!undo||busy}/></div>
+   <div className="imm-inline-controls">
+    <p style={{fontSize:15,lineHeight:1.8,color:theme.text.secondary,margin:'16px 0'}}>使用方向键或 W A S D 移动。手机上可直接滑动棋盘，也可点击下面的方向按钮。</p>
+    <div style={{display:'grid',gridTemplateColumns:'repeat(3, minmax(0,1fr))',gap:8,maxWidth:220,marginBottom:28}}>
+     {['','↑','','←','↓','→'].map((label:string,i:number)=>label?<button key={i} className="control2048" aria-label={{'↑':'向上','↓':'向下','←':'向左','→':'向右'}[label]} onClick={()=>action.current(({'↑':'up','↓':'down','←':'left','→':'right'} as Record<string,Dir>)[label])} style={{fontFamily:theme.font.family,fontSize:26,minHeight:54,border:`1px solid ${theme.border.default}`,borderRadius:10,background:theme.bg.elevated,color:theme.text.primary,cursor:'pointer',touchAction:'manipulation'}}>{label}</button>:<div key={i}/>)}
+    </div>
+   </div>
+  </>}
+  pad={<HandheldPad mode="tap" onDir={(dir)=>action.current(dir)} />}
+  padOverlayOnly
+  help={<div style={{borderTop:`1px solid ${theme.border.default}`,paddingTop:20,fontSize:14,lineHeight:1.9,color:theme.text.secondary}}>全屏十字键点按一次滑动一格，也可滑动棋盘。方向键或 W A S D 移动，Esc 退出全屏。相同数字碰撞时合并，每个方块每步最多合并一次。有效移动后随机出现一个 2 或 4。合成 2048 即获胜；棋盘填满且无法合并时结束。<br/>小提示：把最大的数字留在角落，尽量维持从大到小的排列。最佳分数仅保留在本次页面会话。</div>}
+ >
+<div onPointerDown={swipeStart} onPointerUp={swipeEnd} onPointerCancel={()=>{origin.current=null;}} onLostPointerCapture={()=>{origin.current=null;}} aria-label="2048 游戏棋盘，可在棋盘上滑动" style={immersive?{touchAction:'none',position:'relative',width:fit.width,height:fit.height,maxWidth:'none',aspectRatio:'1',background:theme.bg.subtle,border:`1px solid ${theme.border.default}`,borderRadius:18,padding:6,boxSizing:'border-box',userSelect:'none'}:{touchAction:'none',position:'relative',width:'100%',aspectRatio:'1',background:theme.bg.subtle,border:`1px solid ${theme.border.default}`,borderRadius:18,padding:6,boxSizing:'border-box',userSelect:'none'}}>
  <div style={{position:'relative',width:'100%',height:'100%'}}>
  {Array.from({length:16},(_:unknown,i:number)=><div key={i} style={{position:'absolute',left:`${i%4*25}%`,top:`${Math.floor(i/4)*25}%`,width:'25%',height:'25%',padding:5,boxSizing:'border-box'}}><div style={{width:'100%',height:'100%',background:theme.fill.secondary,borderRadius:10}}/></div>)}
  {tiles.map((t:Tile)=><div className="tile2048" key={t.id} style={{position:'absolute',left:`${t.c*25}%`,top:`${t.r*25}%`,width:'25%',height:'25%',padding:5,boxSizing:'border-box',zIndex:t.merged?2:1}}><div className="face2048" style={{width:'100%',height:'100%',borderRadius:10,display:'flex',alignItems:'center',justifyContent:'center',background:colors[t.value]||'#334b56',color:t.value<=4?'#514b41':'#fffaf0',fontSize:t.value>=1024?'clamp(19px,4vw,30px)':'clamp(26px,5vw,42px)',fontWeight:600,fontVariantNumeric:'tabular-nums',animation:t.merged?'tileMerge 220ms ease-out':t.fresh?'tileAppear 180ms ease-out':undefined}}>{t.value}</div></div>)}
  </div>
  {(won||over)&&!busy&&<div style={{position:'absolute',inset:0,background:theme.bg.elevated+'ed',borderRadius:18,display:'flex',flexDirection:'column',alignItems:'center',justifyContent:'center',gap:16,padding:24,textAlign:'center',zIndex:5}}><div style={{fontSize:32,fontWeight:600}}>{won?'2048，达成！':'暂无可移动方块'}</div><div style={{color:theme.text.secondary}}>{won?'漂亮！你可以继续挑战更大的数字。':`本局 ${game.score.toLocaleString()} 分 · ${game.moves} 步`}</div><div style={{display:'flex',flexWrap:'wrap',justifyContent:'center',gap:10}}>{won&&<Button label="继续挑战" variant="primary" onClick={()=>{const g={...current.current,continued:true};current.current=g;setGame(g);}}/>}<Button label="再来一局" onClick={reset}/>{over&&undo&&<Button label="撤销一步" onClick={rewind}/>}</div></div>}
  </div>
- <div style={{display:'flex',flexWrap:'wrap',gap:10,marginTop:18}}><Button label="新游戏" variant="primary" onClick={reset}/><Button label="撤销一步" onClick={rewind} disabled={!undo||busy}/></div>
- </div>
- <div style={{flex:'1 1 200px',maxWidth:310,paddingTop:8}}>
- <div style={{fontSize:20,fontWeight:600,marginBottom:12}}>每一步，都有可能。</div>
- <p style={{fontSize:15,lineHeight:1.8,color:theme.text.secondary,margin:'0 0 24px'}}>使用方向键或 W A S D 移动。手机上可直接滑动棋盘，也可点击下面的方向按钮。</p>
- <div style={{display:'grid',gridTemplateColumns:'repeat(3, minmax(0,1fr))',gap:8,maxWidth:220,marginBottom:28}}>
- {['','↑','','←','↓','→'].map((label:string,i:number)=>label?<button key={i} className="control2048" aria-label={{'↑':'向上','↓':'向下','←':'向左','→':'向右'}[label]} onClick={()=>action.current(({'↑':'up','↓':'down','←':'left','→':'right'} as Record<string,Dir>)[label])} style={{fontFamily:theme.font.family,fontSize:26,minHeight:54,border:`1px solid ${theme.border.default}`,borderRadius:10,background:theme.bg.elevated,color:theme.text.primary,cursor:'pointer',touchAction:'manipulation'}}>{label}</button>:<div key={i}/>)}
- </div>
- <div style={{borderTop:`1px solid ${theme.border.default}`,paddingTop:20,fontSize:14,lineHeight:1.9,color:theme.text.secondary}}>相同数字碰撞时合并，每个方块每步最多合并一次。有效移动后随机出现一个 2 或 4。合成 2048 即获胜；棋盘填满且无法合并时结束。</div>
- <p style={{fontSize:13,lineHeight:1.8,color:theme.text.tertiary}}>小提示：把最大的数字留在角落，尽量维持从大到小的排列。最佳分数仅保留在本次页面会话。</p>
- </div>
- </div>
+ 
+ </ImmersiveFrame>
  </Page>;
 }

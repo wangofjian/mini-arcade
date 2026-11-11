@@ -8,8 +8,12 @@ import {
   useCallback,
   useMemo,
   useGrokTheme,
-  type CSSProperties
+  type CSSProperties,
+  useRef
 } from '../compat/grok-canvas';
+import { ImmersiveFrame } from '../mobile/ImmersiveFrame';
+import { useImmersivePlay } from '../mobile/immersivePlay';
+import { useStageFit } from '../mobile/useStageFit';
 
 const PLAYERS = 4;
 const PLANES = 4;
@@ -197,6 +201,10 @@ function rollDie(): number {
 }
 
 export default function App() {
+ const stageRef=useRef<HTMLDivElement|null>(null);
+ const {active:immersive}=useImmersivePlay();
+ const fit=useStageFit(stageRef,1,1,immersive,true);
+
   const theme = useGrokTheme();
   const colors = [
     theme.dataviz.categorical[0],
@@ -340,6 +348,13 @@ export default function App() {
       width="wide"
       lang="zh-Hans"
     >
+      <ImmersiveFrame
+        layout="banded"
+        stageRef={stageRef}
+        scrollStage
+        intro={<Text>手机可点「全屏游玩」：棋盘铺满屏幕，点棋子与掷骰。不强加方向键。</Text>}
+      >
+
       <Section>
         <Text>
           本页采用明确的简化规则，不是完整竞赛规程。你执红棋，黄、蓝、绿由电脑轮流走。掷到 6 才能把停机坪上的飞机放到起飞格，并获得再掷一次；先将自己的四架飞机全部送入中心终点者获胜。
@@ -476,11 +491,13 @@ export default function App() {
           })}
         </svg>
       </Section>
-      <Section heading="本页采用的简化规则">
+      <div className="imm-help"><Section heading="本页采用的简化规则">
         <Text>
           四人各四架飞机。掷骰为 1 到 6 点：只有 6 点可将一架飞机从停机坪放到自己的起飞格（不额外再走 6 格）；若掷出 6 无论是否起飞都再掷一次，没有「连掷三个 6 回坪」的惩罚。棋子沿顺时针方向的 52 格航线前进，接近己方起飞格前转入 6 格终点跑道；到达终点必须点数正好，超出则从终点回退多出的格数。若走完后正好落在己方颜色的航线格（每隔 4 格），且前跳 4 格不会越过入终点处，则再跳 4 格一次，不连锁，也没有对角长途飞行。落到与对方同一航线格时，把对方该格全部飞机撞回停机坪；己方可叠在同一格，互不伤害。终点跑道仅己方可进入。电脑使用简单启发（优先到达、撞子、起飞）。
         </Text>
-      </Section>
+      </Section></div>
+    
+      </ImmersiveFrame>
     </Page>
   );
 }

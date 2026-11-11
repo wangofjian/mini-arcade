@@ -8,6 +8,10 @@ import {
   useGrokTheme
 } from '../compat/grok-canvas';
 import { HoldButton } from '../mobile/HoldButton';
+import { HandheldPad } from '../mobile/HandheldPad';
+import { ImmersiveFrame } from '../mobile/ImmersiveFrame';
+import { useImmersivePlay } from '../mobile/immersivePlay';
+import { useStageFit } from '../mobile/useStageFit';
 type Brick={x:number;y:number;w:number;h:number;hp:number;color:string};
 type Spark={x:number;y:number;vx:number;vy:number;life:number;color:string};
 type Drop={x:number;y:number};
@@ -16,7 +20,9 @@ const W=900,H=600,R=8,PY=548;
 const colors=['#fb7185','#fb923c','#facc15','#4ade80','#38bdf8','#a78bfa','#e879f9'];
 function makeBricks(level:number):Brick[]{const out:Brick[]=[];const cols=level===1?10:12,rows=level+3;const w=(W-72-(cols-1)*7)/cols;for(let r=0;r<rows;r++)for(let c=0;c<cols;c++){if(level===1&&r===3&&(c===0||c===9))continue;out.push({x:36+c*(w+7),y:72+r*29,w,h:21,hp:level===3&&r<2?2:1,color:colors[r%colors.length]});}return out;}
 function initial(){return {mode:'ready' as Mode,level:1,score:0,lives:3,x:450,y:PY-R-3,vx:155,vy:-345,p:450,pw:120,wide:0,bricks:makeBricks(1),sparks:[] as Spark[],drops:[] as Drop[],trail:[] as {x:number;y:number}[],time:0};}
-export default function App(){const theme=useGrokTheme();const canvas=useRef<HTMLCanvasElement|null>(null);const game=useRef(initial());const keys=useRef({left:false,right:false});const actions=useRef({launch:()=>{},pause:()=>{},restart:()=>{}});const [hud,setHud]=useState({score:0,lives:3,level:1,mode:'ready' as Mode,remaining:38,wide:0});
+export default function App(){const theme=useGrokTheme();const canvas=useRef<HTMLCanvasElement|null>(null);const stageRef=useRef<HTMLDivElement|null>(null);const game=useRef(initial());const keys=useRef({left:false,right:false});const actions=useRef({launch:()=>{},pause:()=>{},restart:()=>{}});const [hud,setHud]=useState({score:0,lives:3,level:1,mode:'ready' as Mode,remaining:38,wide:0});
+ const {active:immersive}=useImmersivePlay();
+ const fit=useStageFit(stageRef,W,H,immersive,true);
 useEffect(()=>{const el=canvas.current;if(!el)return;const ctx=el.getContext('2d');if(!ctx)return;let raf=0,last=0,acc=0,ui=0;const s=game.current;
 const resetBall=()=>{s.x=s.p;s.y=PY-R-3;s.vx=155;s.vy=-345;s.trail=[];};
 const launch=()=>{if(s.mode==='ready'){s.mode='play';s.vx=(Math.random()>.5?1:-1)*(155+s.level*15);s.vy=-345-s.level*25;}else if(s.mode==='win'||s.mode==='lose'){restart();}else if(s.mode==='pause')s.mode='play';};
@@ -56,8 +62,34 @@ if(s.mode!=='play'){ctx.fillStyle='rgba(7,14,29,.79)';ctx.fillRect(0,0,W,H);ctx.
 const loop=(t:number)=>{const dt=last?Math.min((t-last)/1000,.05):0;last=t;acc+=dt;while(acc>=1/180){step(1/180);acc-=1/180;}draw();ui+=dt;if(ui>.09){ui=0;setHud({score:s.score,lives:s.lives,level:s.level,mode:s.mode,remaining:s.bricks.filter((b:Brick)=>b.hp>0).length,wide:Math.ceil(s.wide)});}raf=requestAnimationFrame(loop);};raf=requestAnimationFrame(loop);
 return()=>{cancelAnimationFrame(raf);el.removeEventListener('pointermove',move);el.removeEventListener('pointerdown',down);el.removeEventListener('keydown',kd);el.removeEventListener('keyup',ku);el.removeEventListener('blur',blur);};
 },[theme.font.family,theme.font.mono]);
-return <Page title="打砖块" summary="反弹、瞄准、击碎。三道砖阵，三次机会。" width="wide" lang="zh-Hans"><div style={{display:'flex',flexWrap:'wrap',gap:20,alignItems:'center',color:theme.text.primary,fontFamily:theme.font.mono,marginBottom:16}}><span>得分 {hud.score.toString().padStart(6,'0')}</span><span>生命 {hud.lives} / 3</span><span>关卡 {hud.level} / 3</span><span style={{color:theme.text.secondary}}>剩余 {hud.remaining} 砖{hud.wide>0?' · 加宽 '+hud.wide+'s':''}</span></div><canvas ref={canvas} width={W} height={H} tabIndex={0} aria-label="打砖块游戏场地，点击聚焦后使用左右方向键和空格" style={{display:'block',width:'100%',height:'auto',aspectRatio:'3 / 2',borderRadius:16,touchAction:'none',outlineColor:theme.border.focus,border:'1px solid '+theme.border.default}}/><div style={{display:'flex',flexWrap:'wrap',gap:10,marginTop:16,marginBottom:16}}><Button label={hud.mode==='pause'?'继续':hud.mode==='win'||hud.mode==='lose'?'再来一局':'发射'} variant="primary" onClick={()=>{canvas.current?.focus();actions.current.launch();}} disabled={hud.mode==='play'}/><Button label={hud.mode==='pause'?'继续游戏':'暂停 · P'} onClick={()=>{actions.current.pause();canvas.current?.focus();}} disabled={hud.mode==='ready'||hud.mode==='win'||hud.mode==='lose'}/><Button label="重新开始" onClick={()=>{actions.current.restart();canvas.current?.focus();}}/>
-<HoldButton label="← 左移" onDown={()=>{keys.current.left=true;}} onUp={()=>{keys.current.left=false;}} />
-<HoldButton label="右移 →" onDown={()=>{keys.current.right=true;}} onUp={()=>{keys.current.right=false;}} />
-</div><Text>手指在场地上滑动控制挡板，或按住下方左右键；也可先点场地，再按 ← →。空格 / 点击发球，P 暂停。球碰到挡板边缘时反弹更斜；接住绿色 ↔ 道具扩大挡板。第三关的装甲砖需要击中两次。</Text></Page>;
+return <Page title="打砖块" summary="反弹、瞄准、击碎。三道砖阵，三次机会。" width="wide" lang="zh-Hans">
+<ImmersiveFrame
+ layout="overlay"
+ stageRef={stageRef}
+ focusRef={canvas}
+ intro={<Text>手机可点「全屏游玩」：场地铺满屏幕，半透明十字键左右移动挡板，右侧圆形键发球。也可在场地上滑动挡板。电脑仍可用键盘。</Text>}
+ hudStats={<><span>得分 {hud.score.toString().padStart(6,'0')}</span><span>生命 {hud.lives} / 3</span><span>关卡 {hud.level} / 3</span><span>剩余 {hud.remaining} 砖{hud.wide>0?' · 加宽 '+hud.wide+'s':''}</span></>}
+ hudActions={<>
+  <Button label={hud.mode==='pause'?'继续':hud.mode==='win'||hud.mode==='lose'?'再来一局':'发射'} variant="primary" onClick={()=>{canvas.current?.focus();actions.current.launch();}} disabled={hud.mode==='play'}/>
+  <Button label={hud.mode==='pause'?'继续':'暂停'} onClick={()=>{actions.current.pause();canvas.current?.focus();}} disabled={hud.mode==='ready'||hud.mode==='win'||hud.mode==='lose'}/>
+  <Button label="重开" onClick={()=>{actions.current.restart();canvas.current?.focus();}}/>
+ </>}
+ side={<>
+  <div className="imm-default-only" style={{display:'flex',flexWrap:'wrap',gap:20,alignItems:'center',color:theme.text.primary,fontFamily:theme.font.mono,marginBottom:16}}><span>得分 {hud.score.toString().padStart(6,'0')}</span><span>生命 {hud.lives} / 3</span><span>关卡 {hud.level} / 3</span><span style={{color:theme.text.secondary}}>剩余 {hud.remaining} 砖{hud.wide>0?' · 加宽 '+hud.wide+'s':''}</span></div>
+  <div style={{display:'flex',flexWrap:'wrap',gap:10,marginTop:16,marginBottom:16}}><Button label={hud.mode==='pause'?'继续':hud.mode==='win'||hud.mode==='lose'?'再来一局':'发射'} variant="primary" onClick={()=>{canvas.current?.focus();actions.current.launch();}} disabled={hud.mode==='play'}/><Button label={hud.mode==='pause'?'继续游戏':'暂停 · P'} onClick={()=>{actions.current.pause();canvas.current?.focus();}} disabled={hud.mode==='ready'||hud.mode==='win'||hud.mode==='lose'}/><Button label="重新开始" onClick={()=>{actions.current.restart();canvas.current?.focus();}}/></div>
+  <div className="imm-inline-controls" style={{display:'flex',flexWrap:'wrap',gap:10}}><HoldButton label="← 左移" onDown={()=>{keys.current.left=true;}} onUp={()=>{keys.current.left=false;}} /><HoldButton label="右移 →" onDown={()=>{keys.current.right=true;}} onUp={()=>{keys.current.right=false;}} /></div>
+ </>}
+ pad={<HandheldPad
+  dirs={{
+    left:{mode:'hold',onDown:()=>{keys.current.left=true;},onUp:()=>{keys.current.left=false;},ariaLabel:'左移挡板'},
+    right:{mode:'hold',onDown:()=>{keys.current.right=true;},onUp:()=>{keys.current.right=false;},ariaLabel:'右移挡板'},
+  }}
+  actions={[{label:'发射',ariaLabel:'发射',onPress:()=>{canvas.current?.focus();actions.current.launch();}}]}
+ />}
+ padOverlayOnly
+ help={<Text>全屏十字键按住左右移动挡板，右侧圆形键发球；也可在场地上滑动。空格 / 点击发球，P 暂停，Esc 退出全屏。球碰到挡板边缘时反弹更斜；接住绿色 ↔ 道具扩大挡板。第三关的装甲砖需要击中两次。</Text>}
+>
+<canvas ref={canvas} width={W} height={H} tabIndex={0} aria-label="打砖块游戏场地，点击聚焦后使用左右方向键和空格" style={immersive?{display:'block',width:fit.width,height:fit.height,maxWidth:'none',borderRadius:16,touchAction:'none',outlineColor:theme.border.focus,border:'1px solid '+theme.border.default}:{display:'block',width:'100%',height:'auto',aspectRatio:'3 / 2',borderRadius:16,touchAction:'none',outlineColor:theme.border.focus,border:'1px solid '+theme.border.default}}/>
+</ImmersiveFrame>
+</Page>;
 }
