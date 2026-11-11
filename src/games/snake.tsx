@@ -10,6 +10,10 @@ import {
   useEffect
 } from '../compat/grok-canvas';
 import { DPad } from '../mobile/DPad';
+import { HandheldPad } from '../mobile/HandheldPad';
+import { ImmersiveFrame } from '../mobile/ImmersiveFrame';
+import { useImmersivePlay } from '../mobile/immersivePlay';
+import { useStageFit } from '../mobile/useStageFit';
 import { swipeDirection } from '../mobile/swipe';
 type Point = {x:number;y:number};
 type Phase = 'ready'|'playing'|'paused'|'over'|'won';
@@ -20,7 +24,9 @@ function spawn(snake:Point[]):Point|null { const free:Point[]=[]; for(let y=0;y<
 function fresh(best=0,wrap=false):Game {const snake=[{x:8,y:12},{x:7,y:12},{x:6,y:12},{x:5,y:12}];return {snake,dir:{x:1,y:0},queue:[],food:spawn(snake),score:0,best,phase:'ready',wrap,sparks:[],clock:0,last:0};}
 function interval(score:number):number{return Math.max(62,160-Math.floor(score/30)*10);}
 export default function App(){
- const theme=useGrokTheme(); const canvas=useRef<HTMLCanvasElement|null>(null); const swipeAt=useRef<{x:number;y:number}|null>(null); const game=useRef<Game>(fresh()); const [view,setView]=useState({score:0,best:0,phase:'ready' as Phase,wrap:false});
+ const theme=useGrokTheme(); const canvas=useRef<HTMLCanvasElement|null>(null); const swipeAt=useRef<{x:number;y:number}|null>(null); const stageRef=useRef<HTMLDivElement|null>(null); const game=useRef<Game>(fresh()); const [view,setView]=useState({score:0,best:0,phase:'ready' as Phase,wrap:false});
+ const {active:immersive}=useImmersivePlay();
+ const fit=useStageFit(stageRef,SIZE,SIZE,immersive,true);
  const sync=()=>{const g=game.current;setView({score:g.score,best:g.best,phase:g.phase,wrap:g.wrap});};
  const start=()=>{const g=game.current;game.current=fresh(g.best,g.wrap);game.current.phase='playing';sync();canvas.current?.focus();};
  const pause=()=>{const g=game.current;if(g.phase==='playing')g.phase='paused';else if(g.phase==='paused'){g.phase='playing';g.clock=0;g.last=0;}sync();canvas.current?.focus();};
@@ -43,30 +49,40 @@ export default function App(){
   };frame=requestAnimationFrame(draw);return()=>{cancelAnimationFrame(frame);window.removeEventListener('keydown',key);window.removeEventListener('blur',blur);document.removeEventListener('visibilitychange',hidden);};
  },[]);
  const overlay=view.phase!=='playing';
+ const stats=[{label:'得分',value:view.score},{label:'本页最高',value:view.best},{label:'速度 · 格/秒',value:(1000/interval(view.score)).toFixed(1)}];
+ const canvasStyle=immersive
+  ?{width:fit.width,height:fit.height,maxWidth:'none' as const,display:'block' as const,aspectRatio:'1',borderRadius:16,border:`1px solid ${theme.border.default}`,touchAction:'none' as const}
+  :{display:'block' as const,width:'100%',height:'auto',aspectRatio:'1',borderRadius:16,border:`1px solid ${theme.border.default}`,touchAction:'none' as const};
+ const turnPad=(dir:'up'|'down'|'left'|'right')=>{if(dir==='left')turn(-1,0);if(dir==='right')turn(1,0);if(dir==='up')turn(0,-1);if(dir==='down')turn(0,1);};
  return <Page title="贪吃蛇" summary="一口一格，越吃越快。经典街机，也可以穿墙。" width="wide" lang="zh-Hans">
- <Section>
- <div style={{display:'flex',flexWrap:'wrap',gap:20,alignItems:'center',justifyContent:'space-between',marginBottom:20,color:theme.text.primary}}>
- <div style={{display:'flex',flexWrap:'wrap',gap:24}}>{[{label:'得分',value:view.score},{label:'本页最高',value:view.best},{label:'速度 · 格/秒',value:(1000/interval(view.score)).toFixed(1)}].map((v:{label:string;value:number|string})=><div key={v.label}><div style={{fontSize:12,color:theme.text.secondary}}>{v.label}</div><div style={{fontSize:28,fontWeight:600,fontVariantNumeric:'tabular-nums'}}>{v.value}</div></div>)}</div>
- <Segmented options={[{value:'wall',label:'经典围墙'},{value:'wrap',label:'穿墙模式'}]} value={view.wrap?'wrap':'wall'} onChange={mode}/>
- </div>
- <div style={{display:'grid',gridTemplateColumns:'repeat(auto-fit,minmax(min(100%,300px),1fr))',gap:28,alignItems:'start'}}>
+ <ImmersiveFrame
+  layout="overlay"
+  stageRef={stageRef}
+  focusRef={canvas}
+  intro={<Text>手机可点「全屏游玩」：棋盘铺满屏幕，半透明十字键转向；也可在棋盘上滑动。电脑仍可用键盘。进度仅保留在本次页面中。</Text>}
+  hudStats={stats.map((v)=><span key={v.label}><small>{v.label}</small>{v.value}</span>)}
+  hudActions={<><Button label={view.phase==='playing'?'暂停':view.phase==='paused'?'继续':'开始'} onClick={view.phase==='playing'||view.phase==='paused'?pause:start}/><Button label="重开" onClick={start}/></>}
+  side={<>
+   <div className="imm-default-only" style={{display:'flex',flexWrap:'wrap',gap:24,marginBottom:16,color:theme.text.primary}}>{stats.map((v)=><div key={v.label}><div style={{fontSize:12,color:theme.text.secondary}}>{v.label}</div><div style={{fontSize:28,fontWeight:600,fontVariantNumeric:'tabular-nums'}}>{v.value}</div></div>)}</div>
+   <Segmented options={[{value:'wall',label:'经典围墙'},{value:'wrap',label:'穿墙模式'}]} value={view.wrap?'wrap':'wall'} onChange={mode}/>
+   <div style={{display:'flex',flexWrap:'wrap',gap:10,margin:'16px 0 24px'}}><Button label={view.phase==='playing'?'暂停':view.phase==='paused'?'继续':'开始'} variant="primary" onClick={view.phase==='playing'||view.phase==='paused'?pause:start}/><Button label="重新开始" onClick={start}/></div>
+   <div className="imm-inline-controls">
+    <div style={{fontSize:14,color:theme.text.secondary,marginBottom:16}}>触屏：在棋盘上滑动，或点按方向键</div>
+    <div style={{marginBottom:24}}><DPad mode="tap" onDir={turnPad} /></div>
+   </div>
+  </>}
+  pad={<HandheldPad mode="tap" onDir={turnPad} />}
+  padOverlayOnly
+  help={<div style={{fontSize:14,lineHeight:1.9,color:theme.text.secondary}}>全屏后十字键点按转向（与默认页方向键相同），也可滑动棋盘。方向键 / WASD 转向<br/>空格 / P 暂停与继续<br/>Enter 开始 · R 重开 · Esc 退出全屏<br/>离开窗口会自动暂停。每吃 3 颗提速一次。切换模式会开始新的待机局；最高分只在当前页面会话保留。<br/>吃橙色食物长大，每颗 10 分。经典模式碰墙结束；穿墙模式从对侧出现。两种模式撞到自己都会结束，不能直接掉头。填满棋盘即可通关。</div>}
+ >
  <div style={{position:'relative',lineHeight:0}}>
- <canvas ref={canvas} width={SIZE} height={SIZE} tabIndex={0} aria-label="贪吃蛇游戏场地，用方向键、WASD、滑动或下方方向键控制" onPointerDown={(e)=>{swipeAt.current={x:e.clientX,y:e.clientY};try{e.currentTarget.setPointerCapture(e.nativeEvent.pointerId);}catch{/* ignore */}}} onPointerUp={(e)=>{const o=swipeAt.current;swipeAt.current=null;if(!o)return;const d=swipeDirection(e.clientX-o.x,e.clientY-o.y);if(d==='left')turn(-1,0);if(d==='right')turn(1,0);if(d==='up')turn(0,-1);if(d==='down')turn(0,1);}} onPointerCancel={()=>{swipeAt.current=null;}} style={{display:'block',width:'100%',height:'auto',aspectRatio:'1',borderRadius:16,border:`1px solid ${theme.border.default}`,touchAction:'none'}}/>
+ <canvas ref={canvas} width={SIZE} height={SIZE} tabIndex={0} aria-label="贪吃蛇游戏场地，用方向键、WASD、滑动或下方方向键控制" onPointerDown={(e)=>{swipeAt.current={x:e.clientX,y:e.clientY};try{e.currentTarget.setPointerCapture(e.nativeEvent.pointerId);}catch{/* ignore */}}} onPointerUp={(e)=>{const o=swipeAt.current;swipeAt.current=null;if(!o)return;const d=swipeDirection(e.clientX-o.x,e.clientY-o.y);if(d==='left')turn(-1,0);if(d==='right')turn(1,0);if(d==='up')turn(0,-1);if(d==='down')turn(0,1);}} onPointerCancel={()=>{swipeAt.current=null;}} style={canvasStyle}/>
  {overlay&&<div style={{position:'absolute',inset:0,display:'flex',flexDirection:'column',alignItems:'center',justifyContent:'center',gap:16,lineHeight:1.5,background:theme.bg.base+'ed',borderRadius:16,color:theme.text.primary,padding:20,textAlign:'center'}}>
  <div style={{fontSize:28,fontWeight:600}}>{view.phase==='ready'?'准备开吃':view.phase==='paused'?'休息一下':view.phase==='won'?'占领全场！':'本局结束'}</div>
  <div style={{color:theme.text.secondary,fontSize:14}}>{view.phase==='ready'?'橙色食物 +10 分，别撞到自己。':view.phase==='paused'?'方向已保留，继续你的路线。':`拿下 ${view.score} 分，再挑战一次？`}</div>
  <Button label={view.phase==='paused'?'继续游戏':view.phase==='ready'?'开始游戏':'再来一局'} variant="primary" onClick={view.phase==='paused'?pause:start}/>
  </div>}
  </div>
- <div style={{color:theme.text.primary}}>
- <div style={{display:'flex',flexWrap:'wrap',gap:10,marginBottom:24}}><Button label={view.phase==='playing'?'暂停':view.phase==='paused'?'继续':'开始'} variant="primary" onClick={view.phase==='playing'||view.phase==='paused'?pause:start}/><Button label="重新开始" onClick={start}/></div>
- <div style={{fontSize:14,color:theme.text.secondary,marginBottom:16}}>触屏：在棋盘上滑动，或点按方向键</div>
- <div style={{marginBottom:24}}><DPad mode="tap" onDir={(dir)=>{if(dir==='left')turn(-1,0);if(dir==='right')turn(1,0);if(dir==='up')turn(0,-1);if(dir==='down')turn(0,1);}} /></div>
- <div style={{fontSize:14,lineHeight:1.9,color:theme.text.secondary}}>方向键 / WASD 转向<br/>空格 / P 暂停与继续<br/>Enter 开始 · R 重开<br/>离开窗口会自动暂停</div>
- <div style={{marginTop:20,fontSize:12,lineHeight:1.7,color:theme.text.tertiary}}>每吃 3 颗提速一次。切换模式会开始新的待机局；最高分只在当前页面会话保留。</div>
- </div>
- </div>
- </Section>
- <Section heading="玩法"><Text>吃橙色食物长大，每颗 10 分。经典模式碰墙结束；穿墙模式从对侧出现。两种模式撞到自己都会结束，不能直接掉头。填满棋盘即可通关。</Text></Section>
+ </ImmersiveFrame>
  </Page>;
 }

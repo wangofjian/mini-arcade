@@ -9,12 +9,19 @@ import {
   useEffect,
   type PointerEvent
 } from '../compat/grok-canvas';
+import { HandheldPad } from '../mobile/HandheldPad';
+import { ImmersiveFrame } from '../mobile/ImmersiveFrame';
+import { useImmersivePlay } from '../mobile/immersivePlay';
+import { useStageFit } from '../mobile/useStageFit';
 const W=960,H=540,PH=96,R=9;
 const clamp=(v:number,a:number,b:number)=>Math.max(a,Math.min(b,v));
 function initial(){return {y:[270,270],vel:[0,0],x:480,b:270,vx:360,vy:120,score:[0,0],wait:0.9,paused:true,started:false,win:-1,hits:0,trail:[] as {x:number,y:number}[]};}
 export default function App(){
-const t=useGrokTheme(),cv=useRef<HTMLCanvasElement|null>(null),g=useRef(initial()),keys=useRef<Record<string,boolean>>({}),touch=useRef<Record<number,{side:number,y:number}>>({});
+const t=useGrokTheme(),cv=useRef<HTMLCanvasElement|null>(null),stageRef=useRef<HTMLDivElement|null>(null),g=useRef(initial()),keys=useRef<Record<string,boolean>>({}),touch=useRef<Record<number,{side:number,y:number}>>({});
 const [mode,setMode]=useState('ai'),[level,setLevel]=useState('medium'),[goal,setGoal]=useState('7'),[status,setStatus]=useState('准备开球'),[score,setScore]=useState([0,0]),[paused,setPaused]=useState(true);
+ const {active:immersive}=useImmersivePlay();
+ const fit=useStageFit(stageRef,W,H,immersive,true);
+ const holdCode=(code:string,on:boolean)=>{keys.current[code]=on;};
 const settings=useRef({mode,level,goal}); settings.current={mode,level,goal};
 const pause=()=>{const s=g.current;if(s.win>=0)return;s.started=true;s.paused=!s.paused;setPaused(s.paused);setStatus(s.paused?'已暂停':'比赛中');};
 const reset=()=>{g.current=initial();touch.current={};keys.current={};setScore([0,0]);setPaused(true);setStatus('准备开球');};
@@ -54,5 +61,32 @@ return()=>{cancelAnimationFrame(id);window.removeEventListener('keydown',down);w
 },[t]);
 const point=(e:PointerEvent<HTMLCanvasElement>,start:boolean)=>{e.preventDefault();const c=e.currentTarget,r=c.getBoundingClientRect(),id=e.nativeEvent.pointerId;const old=touch.current[id];if(!start&&!old)return;if(start)c.setPointerCapture(id);touch.current[id]={side:old?.side??(settings.current.mode==='ai'?0:((e.clientX-r.left)/r.width<0.5?0:1)),y:(e.clientY-r.top)/r.height*H};};
 const release=(e:PointerEvent<HTMLCanvasElement>)=>{delete touch.current[e.nativeEvent.pointerId];};
-return <Page title="乒乓" width="wide" lang="zh-Hans" summary="一来一回，先到目标分获胜。单人挑战 AI，或与朋友同屏对战。"><div style={{color:t.text.primary,fontFamily:t.font.family,display:'flex',flexDirection:'column',gap:16}}><div style={{display:'flex',flexWrap:'wrap',gap:16,alignItems:'end'}}><Select label="模式" value={mode} onChange={setMode} options={[{value:'ai',label:'单人 vs AI'},{value:'two',label:'双人同屏'}]}/><Select label="AI 难度" value={level} onChange={setLevel} disabled={mode==='two'} options={[{value:'easy',label:'轻松'},{value:'medium',label:'标准'},{value:'hard',label:'挑战'}]}/><Select label="获胜分数" value={goal} onChange={setGoal} options={[{value:'7',label:'7 分'},{value:'11',label:'11 分'}]}/></div><div style={{display:'flex',justifyContent:'space-between',flexWrap:'wrap',gap:8,color:t.text.secondary}}><span>玩家一 {score[0]} : {score[1]} {mode==='ai'?'AI':'玩家二'}</span><span aria-live="polite">{status}</span></div><canvas ref={cv} width={W} height={H} aria-label="乒乓球场：左侧玩家一，右侧 AI 或玩家二" onPointerDown={(e:PointerEvent<HTMLCanvasElement>)=>point(e,true)} onPointerMove={(e:PointerEvent<HTMLCanvasElement>)=>point(e,false)} onPointerUp={release} onPointerCancel={release} onLostPointerCapture={release} style={{width:'100%',height:'auto',display:'block',touchAction:'none',borderRadius:12}}/><div style={{display:'flex',flexWrap:'wrap',gap:10}}><Button label={paused?'开始 / 继续':'暂停'} variant="primary" onClick={pause} disabled={g.current.win>=0}/><Button label="重新开始" onClick={reset}/></div></div><Text>玩家一：W / S；单人模式也可用 ↑ / ↓。玩家二：↑ / ↓。空格暂停。触屏拖动球拍，双人时各拖动自己半场。球拍移动和击球位置影响回球角度；切换设置会重开比赛。</Text></Page>;
+return <Page title="乒乓" width="wide" lang="zh-Hans" summary="一来一回，先到目标分获胜。单人挑战 AI，或与朋友同屏对战。">
+<ImmersiveFrame
+ layout="overlay"
+ stageRef={stageRef}
+ intro={<Text>手机可点「全屏游玩」：球场铺满屏幕，半透明十字键上下移动玩家一；双人时右侧圆形键控制玩家二。也可在画面上拖动球拍。电脑仍可用键盘。</Text>}
+ hudStats={<><span>玩家一 {score[0]} : {score[1]} {mode==='ai'?'AI':'玩家二'}</span><span>{status}</span></>}
+ hudActions={<><Button label={paused?'开始 / 继续':'暂停'} variant="primary" onClick={pause} disabled={g.current.win>=0}/><Button label="重开" onClick={reset}/></>}
+ pageActions={<>
+  <Select label="模式" value={mode} onChange={setMode} options={[{value:'ai',label:'单人 vs AI'},{value:'two',label:'双人同屏'}]}/>
+  <Select label="AI 难度" value={level} onChange={setLevel} disabled={mode==='two'} options={[{value:'easy',label:'轻松'},{value:'medium',label:'标准'},{value:'hard',label:'挑战'}]}/>
+  <Select label="获胜分数" value={goal} onChange={setGoal} options={[{value:'7',label:'7 分'},{value:'11',label:'11 分'}]}/>
+ </>}
+ side={<>
+  <div className="imm-default-only" style={{display:'flex',justifyContent:'space-between',flexWrap:'wrap',gap:8,color:t.text.secondary,marginBottom:8}}><span>玩家一 {score[0]} : {score[1]} {mode==='ai'?'AI':'玩家二'}</span><span aria-live="polite">{status}</span></div>
+  <div style={{display:'flex',flexWrap:'wrap',gap:10}}><Button label={paused?'开始 / 继续':'暂停'} variant="primary" onClick={pause} disabled={g.current.win>=0}/><Button label="重新开始" onClick={reset}/></div>
+ </>}
+ pad={<HandheldPad
+  dirs={{
+    up:{mode:'hold',onDown:()=>holdCode('KeyW',true),onUp:()=>holdCode('KeyW',false),ariaLabel:'玩家一上移'},
+    down:{mode:'hold',onDown:()=>holdCode('KeyS',true),onUp:()=>holdCode('KeyS',false),ariaLabel:'玩家一下移'},
+  }}
+  actions={mode==='two'?[{label:'↑',ariaLabel:'玩家二上移',onDown:()=>holdCode('ArrowUp',true),onUp:()=>holdCode('ArrowUp',false)},{label:'↓',ariaLabel:'玩家二下移',onDown:()=>holdCode('ArrowDown',true),onUp:()=>holdCode('ArrowDown',false)}]:undefined}
+ />}
+ help={<Text>全屏十字键上下移动玩家一（对应 W / S）；双人时右侧圆形键控制玩家二（↑ / ↓）。也可拖动球拍，双人时各拖自己半场。玩家一：W / S；单人模式也可用 ↑ / ↓。空格暂停，Esc 退出全屏。球拍移动和击球位置影响回球角度；切换设置会重开比赛。</Text>}
+>
+<canvas ref={cv} width={W} height={H} aria-label="乒乓球场：左侧玩家一，右侧 AI 或玩家二" onPointerDown={(e:PointerEvent<HTMLCanvasElement>)=>point(e,true)} onPointerMove={(e:PointerEvent<HTMLCanvasElement>)=>point(e,false)} onPointerUp={release} onPointerCancel={release} onLostPointerCapture={release} style={immersive?{width:fit.width,height:fit.height,maxWidth:'none',display:'block',touchAction:'none',borderRadius:12}:{width:'100%',height:'auto',display:'block',touchAction:'none',borderRadius:12}}/>
+</ImmersiveFrame>
+</Page>;
 }

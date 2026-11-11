@@ -10,6 +10,9 @@ import {
   useCallback,
   useMemo
 } from '../compat/grok-canvas';
+import { ImmersiveFrame } from '../mobile/ImmersiveFrame';
+import { useImmersivePlay } from '../mobile/immersivePlay';
+import { useStageFit } from '../mobile/useStageFit';
 
 type Point = { r: number; c: number };
 type Status = "ready" | "playing" | "won" | "lost";
@@ -209,6 +212,10 @@ function samePoint(a: Point | null, b: Point): boolean {
 }
 
 export default function App() {
+ const stageRef=useRef<HTMLDivElement|null>(null);
+ const {active:immersive}=useImmersivePlay();
+ const fit=useStageFit(stageRef,10,8,immersive,true);
+
   const theme = useGrokTheme();
   const [board, setBoard] = useState<(string | null)[][]>(() => buildBoard());
   const [selected, setSelected] = useState<Point | null>(null);
@@ -396,6 +403,12 @@ export default function App() {
       lang="zh-Hans"
       width="wide"
     >
+      <ImmersiveFrame
+        layout="banded"
+        stageRef={stageRef}
+        intro={<Text>手机可点「全屏游玩」：棋盘尽量铺满屏幕，点选配对消除。不强加方向键。</Text>}
+      >
+
       <Text>{tip}</Text>
       <Section>
         <div
@@ -554,6 +567,8 @@ export default function App() {
                 : msg}
         </Text>
       </Section>
+    
+      </ImmersiveFrame>
     </Page>
   );
 }

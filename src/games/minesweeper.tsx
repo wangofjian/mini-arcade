@@ -8,12 +8,19 @@ import {
   useRef,
   useGrokTheme
 } from '../compat/grok-canvas';
+import { ImmersiveFrame } from '../mobile/ImmersiveFrame';
+import { useImmersivePlay } from '../mobile/immersivePlay';
+import { useStageFit } from '../mobile/useStageFit';
 type Cell = { mine:boolean; n:number; open:boolean; flag:boolean };
 type Game = { cells:Cell[]; phase:'ready'|'playing'|'won'|'lost'; start:number; end:number; hit:number };
 const levels = [{name:'初级',r:9,c:9,m:10},{name:'中级',r:16,c:16,m:40},{name:'高级',r:16,c:30,m:99}];
 function blank(size:number):Game { return {cells:Array.from({length:size},()=>({mine:false,n:0,open:false,flag:false})),phase:'ready',start:0,end:0,hit:-1}; }
 function neighbors(i:number,r:number,c:number):number[] { const a:number[]=[];const y=Math.floor(i/c),x=i%c; for(let dy=-1;dy<=1;dy++)for(let dx=-1;dx<=1;dx++){const yy=y+dy,xx=x+dx;if((dx||dy)&&yy>=0&&yy<r&&xx>=0&&xx<c)a.push(yy*c+xx);}return a; }
 export default function App(){
+ const stageRef=useRef<HTMLDivElement|null>(null);
+ const {active:immersive}=useImmersivePlay();
+ const fit=useStageFit(stageRef,30,16,immersive,true);
+
  const theme=useGrokTheme();const [level,setLevel]=useState(0); const cfg=levels[level];const [game,setGame]=useState<Game>(()=>blank(81));const [flagMode,setFlagMode]=useState(false);const [now,setNow]=useState(Date.now());
  const hold=useRef<ReturnType<typeof setTimeout>|null>(null); const held=useRef(false);
  useEffect(()=>{if(game.phase!=='playing')return;const t=setInterval(()=>setNow(Date.now()),250);return()=>clearInterval(t);},[game.phase]);
@@ -30,11 +37,19 @@ export default function App(){
  const status=game.phase==='ready'?'点击任意格开始 · 首击及周围安全':game.phase==='won'?'胜利！全部安全格已找到。':game.phase==='lost'?'踩到雷了，再来一局。':flagMode?'插旗模式 · 再点一次可取消旗帜':'探索中 · 数字表示周围八格的雷数';
  function cancelHold(){if(hold.current){clearTimeout(hold.current);hold.current=null;}}
  return <Page title="扫雷" summary="一块雷区，一点推理。经典扫雷，随时来一局。" width="wide" lang="zh-Hans">
+      <ImmersiveFrame
+        layout="banded"
+        stageRef={stageRef}
+        intro={<Text>手机可点「全屏游玩」：棋盘尽量铺满屏幕，点击翻开，长按插旗。不强加方向键。</Text>}
+      >
+
  <Section><div style={{display:'flex',flexWrap:'wrap',gap:8,alignItems:'center'}}>{levels.map((v:{name:string;r:number;c:number;m:number},i:number)=><Button key={v.name} label={`${v.name} ${v.r}×${v.c} / ${v.m}雷`} variant={i===level?'primary':'quiet'} onClick={()=>reset(i)}/>)}<Button label="重新开始" onClick={()=>reset()}/><Button label={flagMode?'模式：插旗 ⚑':'模式：翻开'} variant={flagMode?'primary':'quiet'} onClick={()=>setFlagMode(!flagMode)}/></div></Section>
  <Section><div style={{display:'flex',flexWrap:'wrap',gap:24,padding:'16px 0',borderTop:`1px solid ${theme.border.default}`,borderBottom:`1px solid ${theme.border.default}`,color:theme.text.primary,fontFamily:theme.font.mono}}><div>剩余雷 <strong style={{fontSize:26}}>{String(cfg.m-flags).padStart(3,'0')}</strong></div><div>用时 <strong style={{fontSize:26}}>{String(seconds).padStart(3,'0')}</strong> 秒</div><div>安全格 <strong>{opened}</strong> / {cfg.r*cfg.c-cfg.m}</div></div><div aria-live="polite" style={{padding:'14px 0',color:game.phase==='won'?theme.text.success:game.phase==='lost'?theme.text.danger:theme.text.secondary}}>{status}</div>
  <div style={{overflowX:'auto',paddingBottom:12}}><div role="group" aria-label={`${cfg.name}扫雷棋盘`} style={{display:'grid',gridTemplateColumns:`repeat(${cfg.c}, minmax(28px, 1fr))`,gap:2,minWidth:cfg.c*30,maxWidth:cfg.c*38,background:theme.border.strong,padding:4,border:`2px solid ${theme.border.strong}`,userSelect:'none'}}>
  {game.cells.map((v:Cell,i:number)=>{const ended=game.phase==='lost';const mineShown=ended&&v.mine;const wrong=ended&&v.flag&&!v.mine;const visible=v.open||mineShown;const label=wrong?'×':v.flag?'⚑':mineShown?'✹':v.open&&v.n>0?String(v.n):'';return <button key={i} type="button" aria-label={`第${Math.floor(i/cfg.c)+1}行第${i%cfg.c+1}列，${wrong?'错误旗帜':v.flag?'已插旗':mineShown?'地雷':v.open?`${v.n}颗相邻雷`:'未翻开'}`} disabled={game.phase==='won'||ended} onContextMenu={(e)=>{e.preventDefault();cancelHold();held.current=true;flag(i);}} onPointerDown={(e)=>{held.current=false;if(e.button!==0)return;cancelHold();hold.current=setTimeout(()=>{held.current=true;flag(i);},450);}} onPointerUp={()=>cancelHold()} onPointerLeave={()=>cancelHold()} onPointerCancel={()=>cancelHold()} onLostPointerCapture={()=>cancelHold()} onClick={()=>{cancelHold();if(held.current){held.current=false;return;}if(flagMode)flag(i);else reveal(i);}} style={{aspectRatio:'1',padding:0,display:'flex',alignItems:'center',justifyContent:'center',fontSize:19,fontWeight:700,fontFamily:theme.font.mono,lineHeight:1,cursor:ended?'default':'pointer',touchAction:'manipulation',WebkitTouchCallout:'none',color:wrong||i===game.hit?theme.text.danger:v.flag?theme.text.warning:visible?numberColors[v.n]:theme.text.primary,background:i===game.hit?theme.fill.dangerSubtle:visible?theme.bg.base:theme.bg.elevated,border:visible?`1px solid ${theme.border.subtle}`:`2px outset ${theme.border.default}`,borderRadius:1,opacity:1}}>{label}</button>;})}
  </div></div></Section>
- <Section heading="怎么玩"><Text>点击翻开；数字是周围八格的地雷数。右键、长按约半秒，或切换「插旗」模式来标记。翻开所有非雷格即获胜，不必插完全部旗。</Text><Text>已翻开的数字格：相邻旗数等于数字时，再点可快速展开周围格；旗插错也会踩雷。中高级棋盘在手机上可横向滑动。首击周围无雷，但不保证每局都能纯推理解开。</Text></Section>
- </Page>;
+ <div className="imm-help"><Section heading="怎么玩"><Text>点击翻开；数字是周围八格的地雷数。右键、长按约半秒，或切换「插旗」模式来标记。翻开所有非雷格即获胜，不必插完全部旗。</Text><Text>已翻开的数字格：相邻旗数等于数字时，再点可快速展开周围格；旗插错也会踩雷。中高级棋盘在手机上可横向滑动。首击周围无雷，但不保证每局都能纯推理解开。</Text></Section></div>
+ 
+      </ImmersiveFrame>
+    </Page>;
 }

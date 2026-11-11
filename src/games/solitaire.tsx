@@ -15,6 +15,9 @@ import {
 } from '../compat/grok-canvas';
 import { useElementWidth } from '../mobile/useElementWidth';
 import { packedCellWidth } from '../mobile/scale';
+import { ImmersiveFrame } from '../mobile/ImmersiveFrame';
+import { useImmersivePlay } from '../mobile/immersivePlay';
+import { useStageFit } from '../mobile/useStageFit';
 
 type Suit = "S" | "H" | "D" | "C";
 type Rank = 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8 | 9 | 10 | 11 | 12 | 13;
@@ -311,6 +314,10 @@ function EmptySlot(props: {
 }
 
 export default function App() {
+ const stageRef=useRef<HTMLDivElement|null>(null);
+ const {active:immersive}=useImmersivePlay();
+ const fit=useStageFit(stageRef,7,5,immersive,true);
+
   const boardRef = useRef<HTMLDivElement>(null);
   const boardWidth = useElementWidth(boardRef, 320);
   const theme = useGrokTheme();
@@ -683,6 +690,13 @@ export default function App() {
       width="wide"
       lang="zh-Hans"
     >
+      <ImmersiveFrame
+        layout="banded"
+        stageRef={stageRef}
+        scrollStage
+        intro={<Text>手机可点「全屏游玩」：牌局尽量铺满屏幕，点选与移动纸牌；过长时可滚动。不强加方向键。</Text>}
+      >
+
       <Section>
         <Text>
           牌列异色递减叠放，空列放 K；收牌区同花色从 A 收到 K。点击牌堆翻牌，点选牌后再点目标完成移动；双击顶牌或点「提示收牌」可自动送入收牌区。
@@ -943,11 +957,13 @@ export default function App() {
         </div>
       </Section>
 
-      <Section heading="规则摘要">
+      <div className="imm-help"><Section heading="规则摘要">
         <Text>
           标准 52 张牌。七列分别发 1～7 张，每列最上一张翻开。牌堆可按「单张」或「三张」翻到废牌区；废牌用尽可无限次回收到牌堆。收齐四色花色至 K 即获胜。
         </Text>
-      </Section>
+      </Section></div>
+    
+      </ImmersiveFrame>
     </Page>
   );
 }

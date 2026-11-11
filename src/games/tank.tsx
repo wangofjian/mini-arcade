@@ -8,11 +8,18 @@ import {
   useGrokTheme,
   type PointerEvent
 } from '../compat/grok-canvas';
+import { HandheldPad } from '../mobile/HandheldPad';
+import { ImmersiveFrame } from '../mobile/ImmersiveFrame';
+import { useImmersivePlay } from '../mobile/immersivePlay';
+import { useStageFit } from '../mobile/useStageFit';
 type Tank={x:number;y:number;d:number;cd:number;turn:number;hp:number};
 type Shot={x:number;y:number;d:number;enemy:boolean;dead?:boolean};
 const N=20,T=28,W=N*T,V=[[0,-1],[1,0],[0,1],[-1,0]];
 export default function App(){
- const theme=useGrokTheme(),ref=useRef<HTMLCanvasElement>(null),keys=useRef<Record<string,boolean>>({}),cmd=useRef(''),[hud,setHud]=useState('第 1 关 · 生命 3 · 击破 0'),[paused,setPaused]=useState(false);
+ const theme=useGrokTheme(),ref=useRef<HTMLCanvasElement>(null),stageRef=useRef<HTMLDivElement|null>(null),keys=useRef<Record<string,boolean>>({}),cmd=useRef(''),[hud,setHud]=useState('第 1 关 · 生命 3 · 击破 0'),[paused,setPaused]=useState(false);
+ const {active:immersive}=useImmersivePlay();
+ const fit=useStageFit(stageRef,W,W,immersive,true);
+ const holdKey=(key:string,on:boolean)=>{keys.current[key]=on;};
  useEffect(()=>{const canvas=ref.current;if(!canvas)return;const ctx=canvas.getContext('2d');if(!ctx)return;
  let grid:number[][]=[],player:Tank,enemies:Tank[]=[],shots:Shot[]=[],stage=1,lives=3,score=0,spawned=0,killed=0,spawnTime=0,inv=2,mode='play',pause=false,flash=0,frame=0,last=0,ui=0;
  const makeTank=(x:number,y:number,d:number,hp=1):Tank=>({x,y,d,hp,cd:0.5,turn:0});
@@ -52,5 +59,31 @@ export default function App(){
  const up=(e:globalThis.KeyboardEvent)=>{keys.current[e.key.length===1?e.key.toLowerCase():e.key]=false;};const blur=()=>{keys.current={};if(!pause&&mode==='play')cmd.current='pause';};window.addEventListener('keydown',down);window.addEventListener('keyup',up);window.addEventListener('blur',blur);frame=requestAnimationFrame(tick);sync();return()=>{cancelAnimationFrame(frame);window.removeEventListener('keydown',down);window.removeEventListener('keyup',up);window.removeEventListener('blur',blur);keys.current={};};
  },[]);
  const control=(label:string,key:string)=><button key={key} style={{padding:'14px 22px',border:`1px solid ${theme.border.default}`,borderRadius:theme.radius.md,background:theme.bg.elevated,color:theme.text.primary,fontFamily:theme.font.family,touchAction:'none',userSelect:'none'}} onPointerDown={(e:PointerEvent<HTMLButtonElement>)=>{e.preventDefault();e.currentTarget.setPointerCapture(e.nativeEvent.pointerId);keys.current[key]=true;}} onPointerUp={()=>{keys.current[key]=false;}} onPointerCancel={()=>{keys.current[key]=false;}} onLostPointerCapture={()=>{keys.current[key]=false;}}>{label}</button>;
- return <Page title="坦克对战" width="wide" lang="zh-Hans" summary="三道防线，一座基地。驾驶坦克，击碎砖墙，守住最后的阵地。"><Text>{hud}</Text><div style={{display:'flex',flexWrap:'wrap',gap:10,marginBottom:16}}><Button label={paused?'继续':'暂停'} onClick={()=>{cmd.current='pause';}}/><Button label="重新开始" onClick={()=>{cmd.current='reset';}}/></div><canvas ref={ref} width={W} height={W} aria-label="坦克战场，使用下方触屏按钮或方向键和空格操作" style={{width:'100%',maxHeight:'70vh',objectFit:'contain',display:'block',touchAction:'none'}}/><div style={{display:'flex',flexWrap:'wrap',justifyContent:'center',gap:8,marginTop:16}}>{control('↑','ArrowUp')}{control('←','ArrowLeft')}{control('↓','ArrowDown')}{control('→','ArrowRight')}{control('开火',' ')}</div><Text>方向键 / WASD 移动 · 空格 / J 开火 · P 暂停。砖墙可破坏，钢墙不可破坏；绿蓝色基地被命中即失败。每过一关补充一条生命，紫色敌军需要两发命中。触屏可同时按住方向和开火。</Text></Page>;
+ return <Page title="坦克对战" width="wide" lang="zh-Hans" summary="三道防线，一座基地。驾驶坦克，击碎砖墙，守住最后的阵地。">
+ <ImmersiveFrame
+  layout="overlay"
+  stageRef={stageRef}
+  intro={<Text>手机可点「全屏游玩」：战场铺满屏幕，半透明十字键移动，右侧圆形键开火。电脑仍可用键盘。</Text>}
+  hudStats={<span>{hud}</span>}
+  hudActions={<><Button label={paused?'继续':'暂停'} onClick={()=>{cmd.current='pause';}}/><Button label="重开" onClick={()=>{cmd.current='reset';}}/></>}
+  side={<>
+   <Text>{hud}</Text>
+   <div style={{display:'flex',flexWrap:'wrap',gap:10,marginBottom:16}}><Button label={paused?'继续':'暂停'} onClick={()=>{cmd.current='pause';}}/><Button label="重新开始" onClick={()=>{cmd.current='reset';}}/></div>
+   <div className="imm-inline-controls" style={{display:'flex',flexWrap:'wrap',justifyContent:'center',gap:8,marginTop:16}}>{control('↑','ArrowUp')}{control('←','ArrowLeft')}{control('↓','ArrowDown')}{control('→','ArrowRight')}{control('开火',' ')}</div>
+  </>}
+  pad={<HandheldPad
+   dirs={{
+    up:{mode:'hold',onDown:()=>holdKey('ArrowUp',true),onUp:()=>holdKey('ArrowUp',false),ariaLabel:'向上'},
+    down:{mode:'hold',onDown:()=>holdKey('ArrowDown',true),onUp:()=>holdKey('ArrowDown',false),ariaLabel:'向下'},
+    left:{mode:'hold',onDown:()=>holdKey('ArrowLeft',true),onUp:()=>holdKey('ArrowLeft',false),ariaLabel:'向左'},
+    right:{mode:'hold',onDown:()=>holdKey('ArrowRight',true),onUp:()=>holdKey('ArrowRight',false),ariaLabel:'向右'},
+   }}
+   actions={[{label:'开火',ariaLabel:'开火',onDown:()=>holdKey(' ',true),onUp:()=>holdKey(' ',false)}]}
+  />}
+  padOverlayOnly
+  help={<Text>全屏十字键按住移动，右侧圆形键开火（可同时按住）。方向键 / WASD 移动 · 空格 / J 开火 · P 暂停 · Esc 退出全屏。砖墙可破坏，钢墙不可破坏；绿蓝色基地被命中即失败。每过一关补充一条生命，紫色敌军需要两发命中。</Text>}
+ >
+ <canvas ref={ref} width={W} height={W} aria-label="坦克战场，使用下方触屏按钮或方向键和空格操作" style={immersive?{width:fit.width,height:fit.height,maxWidth:'none',maxHeight:'none',objectFit:'contain',display:'block',touchAction:'none'}:{width:'100%',maxHeight:'70vh',objectFit:'contain',display:'block',touchAction:'none'}}/>
+ </ImmersiveFrame>
+ </Page>;
 }

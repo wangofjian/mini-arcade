@@ -11,6 +11,10 @@ import {
   type CSSProperties,
   type PointerEvent
 } from '../compat/grok-canvas';
+import { HandheldPad } from '../mobile/HandheldPad';
+import { ImmersiveFrame } from '../mobile/ImmersiveFrame';
+import { useImmersivePlay } from '../mobile/immersivePlay';
+import { useStageFit } from '../mobile/useStageFit';
 
 const W = 360;
 const H = 640;
@@ -139,6 +143,9 @@ export default function App() {
   const themeRef = useRef(theme);
   themeRef.current = theme;
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
+  const stageRef = useRef<HTMLDivElement | null>(null);
+  const {active:immersive}=useImmersivePlay();
+  const fit=useStageFit(stageRef,W,H,immersive,true);
   const ballRef = useRef<Ball>(plungerBall());
   const wallsRef = useRef<Seg[]>(makeWalls());
   const bumpersRef = useRef<Bumper[]>(makeBumpers());
@@ -441,30 +448,54 @@ export default function App() {
       width="wide"
       lang="zh-Hans"
     >
-      <Section>
-        <Text>
-          这是弹珠台，不是打砖块。先在右侧通道蓄力发射，再用左右挡板把球打回台面，撞击圆形弹射器和三角弹性垫得分。球从挡板中间掉进落袋就失去一球，三球用完结算。
-        </Text>
-      </Section>
-      <Section>
-        <div style={{ display: 'flex', flexWrap: 'wrap', gap: 12, alignItems: 'center', fontFamily: theme.font.family }}>
-          <Button label="重新开始" variant="primary" onClick={restart} />
-          <span>得分 {score}</span>
-          <span style={{ color: theme.text.secondary }}>最高 {best}</span>
-          <span>剩余球 {ballsLeft}</span>
-          {mode === 'ready' ? <span style={{ color: theme.text.secondary }}>蓄力 {powerView}%</span> : null}
-        </div>
-        <div aria-live="polite" style={{ marginTop: 8, color: theme.text.primary, fontFamily: theme.font.family }}>
-          {message}
-        </div>
-      </Section>
-      <Section>
+      <ImmersiveFrame
+        layout="overlay"
+        stageRef={stageRef}
+        intro={<Text>手机可点「全屏游玩」：弹珠台铺满屏幕，半透明十字键左右挡板，右侧圆形键按住蓄力、松开发射。电脑仍可用键盘。</Text>}
+        hudStats={<><span>得分 {score}</span><span>最高 {best}</span><span>剩余球 {ballsLeft}</span>{mode === 'ready' ? <span>蓄力 {powerView}%</span> : null}</>}
+        hudActions={<Button label="重开" variant="primary" onClick={restart} />}
+        hudMsg={message}
+        side={<>
+          <div className="imm-default-only" style={{ display: 'flex', flexWrap: 'wrap', gap: 12, alignItems: 'center', fontFamily: theme.font.family }}>
+            <Button label="重新开始" variant="primary" onClick={restart} />
+            <span>得分 {score}</span>
+            <span style={{ color: theme.text.secondary }}>最高 {best}</span>
+            <span>剩余球 {ballsLeft}</span>
+            {mode === 'ready' ? <span style={{ color: theme.text.secondary }}>蓄力 {powerView}%</span> : null}
+          </div>
+          <div className="imm-default-only" aria-live="polite" style={{ marginTop: 8, color: theme.text.primary, fontFamily: theme.font.family }}>{message}</div>
+          <div className="imm-inline-controls" style={{ display: 'flex', gap: 8, maxWidth: 400, margin: '12px auto 0', fontFamily: theme.font.family }}>
+            <button type="button" style={btnStyle} onPointerDown={hold(leftDown, true)} onPointerUp={hold(leftDown, false)} onPointerCancel={hold(leftDown, false)} onLostPointerCapture={hold(leftDown, false)}>左挡板</button>
+            <button type="button" style={btnStyle} onPointerDown={hold(plungerDown, true)} onPointerUp={hold(plungerDown, false)} onPointerCancel={hold(plungerDown, false)} onLostPointerCapture={hold(plungerDown, false)}>{mode === 'over' ? '已结束' : '发射 / 蓄力'}</button>
+            <button type="button" style={btnStyle} onPointerDown={hold(rightDown, true)} onPointerUp={hold(rightDown, false)} onPointerCancel={hold(rightDown, false)} onLostPointerCapture={hold(rightDown, false)}>右挡板</button>
+          </div>
+        </>}
+        pad={<HandheldPad
+          dirs={{
+            left:{mode:'hold',onDown:()=>{leftDown.current=true;},onUp:()=>{leftDown.current=false;},ariaLabel:'左挡板'},
+            right:{mode:'hold',onDown:()=>{rightDown.current=true;},onUp:()=>{rightDown.current=false;},ariaLabel:'右挡板'},
+          }}
+          actions={[{label:'发射',ariaLabel:'蓄力发射',onDown:()=>{plungerDown.current=true;},onUp:()=>{plungerDown.current=false;}}]}
+        />}
+        padOverlayOnly
+        help={<Text>全屏十字键按住左右挡板，右侧圆形键按住蓄力、松开发射。键盘：左挡板用左方向键或 Z / A，右挡板用右方向键或 M / L，空格或回车按住蓄力、松开发射。Esc 退出全屏。击中大弹射器得 100 或 150 分，两侧小柱 50 分，三角弹性垫 25 分，连击会有少量加成。物理为简化街机模型。未做完整实机弹珠模拟（无多球、无倾斜犯规）。刷新页面不保留最高分。这是弹珠台，不是打砖块。先在右侧通道蓄力发射，再用左右挡板把球打回台面。</Text>}
+      >
         <canvas
           ref={canvasRef}
           width={W}
           height={H}
           aria-label="弹珠台"
-          style={{
+          style={immersive?{
+            display: 'block',
+            width: fit.width,
+            height: fit.height,
+            maxWidth: 'none',
+            margin: 0,
+            borderRadius: 12,
+            border: '1px solid ' + theme.border.default,
+            background: theme.bg.subtle,
+            touchAction: 'none',
+          }:{
             display: 'block',
             width: '100%',
             maxWidth: 400,
@@ -475,44 +506,7 @@ export default function App() {
             touchAction: 'none',
           }}
         />
-        <div style={{ display: 'flex', gap: 8, maxWidth: 400, margin: '12px auto 0', fontFamily: theme.font.family }}>
-          <button
-            type="button"
-            style={btnStyle}
-            onPointerDown={hold(leftDown, true)}
-            onPointerUp={hold(leftDown, false)}
-            onPointerCancel={hold(leftDown, false)}
-            onLostPointerCapture={hold(leftDown, false)}
-          >
-            左挡板
-          </button>
-          <button
-            type="button"
-            style={btnStyle}
-            onPointerDown={hold(plungerDown, true)}
-            onPointerUp={hold(plungerDown, false)}
-            onPointerCancel={hold(plungerDown, false)}
-            onLostPointerCapture={hold(plungerDown, false)}
-          >
-            {mode === 'over' ? '已结束' : '发射 / 蓄力'}
-          </button>
-          <button
-            type="button"
-            style={btnStyle}
-            onPointerDown={hold(rightDown, true)}
-            onPointerUp={hold(rightDown, false)}
-            onPointerCancel={hold(rightDown, false)}
-            onLostPointerCapture={hold(rightDown, false)}
-          >
-            右挡板
-          </button>
-        </div>
-      </Section>
-      <Section heading="操作与规则">
-        <Text>
-          键盘：左挡板用左方向键或 Z / A，右挡板用右方向键或 M / L，空格或回车按住蓄力、松开发射。触控或鼠标按住页内三个按钮即可。击中大弹射器得 100 或 150 分，两侧小柱 50 分，三角弹性垫 25 分，连击会有少量加成。物理为简化街机模型：重力下落、线段与圆碰撞反弹，挡板抬起时额外弹射。未做完整实机弹珠模拟（无多球、无倾斜犯规）。刷新页面不保留最高分。
-        </Text>
-      </Section>
+      </ImmersiveFrame>
     </Page>
   );
 }

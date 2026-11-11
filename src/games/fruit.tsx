@@ -8,10 +8,16 @@ import {
   useGrokTheme,
   type PointerEvent
 } from '../compat/grok-canvas';
+import { HandheldPad } from '../mobile/HandheldPad';
+import { ImmersiveFrame } from '../mobile/ImmersiveFrame';
+import { useImmersivePlay } from '../mobile/immersivePlay';
+import { useStageFit } from '../mobile/useStageFit';
 type Drop={x:number;y:number;v:number;kind:number;spin:number};
 type Spark={x:number;y:number;vx:number;vy:number;t:number;color:string};
 export default function App(){
- const theme=useGrokTheme(); const cv=useRef<HTMLCanvasElement|null>(null); const keys=useRef({left:false,right:false});
+ const theme=useGrokTheme(); const cv=useRef<HTMLCanvasElement|null>(null); const stageRef=useRef<HTMLDivElement|null>(null); const keys=useRef({left:false,right:false});
+ const {active:immersive}=useImmersivePlay();
+ const fit=useStageFit(stageRef,800,540,immersive,true);
  const game=useRef({x:400,score:0,lives:5,time:0,spawn:0,drops:[] as Drop[],sparks:[] as Spark[],status:'ready',best:0,combo:0,flash:0});
  const [hud,setHud]=useState({score:0,lives:5,best:0,level:1,combo:0,status:'ready'});
  const sync=()=>{const g=game.current;setHud({score:g.score,lives:g.lives,best:g.best,level:1+Math.floor(g.time/18),combo:g.combo,status:g.status});};
@@ -55,9 +61,30 @@ export default function App(){
  const move=(e:PointerEvent<HTMLCanvasElement>)=>{if(e.buttons===0&&e.nativeEvent.pointerType==='mouse')return;const rect=e.currentTarget.getBoundingClientRect();game.current.x=Math.max(48,Math.min(752,(e.clientX-rect.left)/rect.width*800));};
  const controlStyle={background:theme.bg.elevated,color:theme.text.primary,border:'1px solid '+theme.border.default,borderRadius:8,padding:'14px 30px',touchAction:'none',fontFamily:theme.font.family,fontSize:20};
  return <Page title="接水果" summary="果园接力：接住好果，躲开危险。坚持越久，落下的速度越快。" width="wide" lang="zh-Hans">
- <div style={{display:'flex',flexWrap:'wrap',gap:20,color:theme.text.primary,fontFamily:theme.font.family,paddingBottom:14}} aria-live="polite"><span>得分 {hud.score}</span><span>生命 {hud.lives} / 5</span><span>等级 {hud.level}</span><span>连接 {hud.combo}</span><span>本页最高 {hud.best}</span></div>
- <canvas ref={cv} width={800} height={540} aria-label="接水果游戏区，使用左右方向键或手指拖动篮子" onPointerDown={(e:PointerEvent<HTMLCanvasElement>)=>{e.preventDefault();e.currentTarget.setPointerCapture(e.nativeEvent.pointerId);move(e);}} onPointerMove={move} style={{display:'block',width:'100%',height:'auto',borderRadius:12,touchAction:'none'}} />
- <div style={{display:'flex',flexWrap:'wrap',gap:12,paddingTop:16,paddingBottom:14}}><Button label={hud.status==='ready'?'开始游戏':'重新开始'} onClick={start} variant="primary"/><Button label={hud.status==='paused'?'继续':'暂停'} onClick={pause} disabled={hud.status==='ready'||hud.status==='over'}/><button style={controlStyle} aria-label="向左" onPointerDown={(e:PointerEvent<HTMLButtonElement>)=>{e.currentTarget.setPointerCapture(e.nativeEvent.pointerId);keys.current.left=true;}} onPointerUp={()=>{keys.current.left=false;}} onPointerCancel={()=>{keys.current.left=false;}} onLostPointerCapture={()=>{keys.current.left=false;}}>←</button><button style={controlStyle} aria-label="向右" onPointerDown={(e:PointerEvent<HTMLButtonElement>)=>{e.currentTarget.setPointerCapture(e.nativeEvent.pointerId);keys.current.right=true;}} onPointerUp={()=>{keys.current.right=false;}} onPointerCancel={()=>{keys.current.right=false;}} onLostPointerCapture={()=>{keys.current.right=false;}}>→</button></div>
- <Text>方向键 / A、D 移动，空格 / P 暂停。触屏可拖动篮子或按住方向按钮。鲜果加分，连续接果有奖励；漏接鲜果、接到炸弹或带黑斑的坏果均扣一条生命。最高分保留在当前打开的页面中。</Text>
+ <ImmersiveFrame
+  layout="overlay"
+  stageRef={stageRef}
+  intro={<Text>手机可点「全屏游玩」：画面铺满屏幕，半透明十字键左右移动篮子；也可在画面上拖动篮子。电脑仍可用键盘。</Text>}
+  hudStats={<><span>得分 {hud.score}</span><span>生命 {hud.lives} / 5</span><span>等级 {hud.level}</span><span>连接 {hud.combo}</span><span>最高 {hud.best}</span></>}
+  hudActions={<><Button label={hud.status==='ready'?'开始':'重开'} onClick={start} variant="primary"/><Button label={hud.status==='paused'?'继续':'暂停'} onClick={pause} disabled={hud.status==='ready'||hud.status==='over'}/></>}
+  side={<>
+   <div className="imm-default-only" style={{display:'flex',flexWrap:'wrap',gap:20,color:theme.text.primary,fontFamily:theme.font.family,paddingBottom:14}} aria-live="polite"><span>得分 {hud.score}</span><span>生命 {hud.lives} / 5</span><span>等级 {hud.level}</span><span>连接 {hud.combo}</span><span>本页最高 {hud.best}</span></div>
+   <div style={{display:'flex',flexWrap:'wrap',gap:12,paddingTop:16,paddingBottom:14}}><Button label={hud.status==='ready'?'开始游戏':'重新开始'} onClick={start} variant="primary"/><Button label={hud.status==='paused'?'继续':'暂停'} onClick={pause} disabled={hud.status==='ready'||hud.status==='over'}/></div>
+   <div className="imm-inline-controls" style={{display:'flex',flexWrap:'wrap',gap:12}}>
+    <button style={controlStyle} aria-label="向左" onPointerDown={(e:PointerEvent<HTMLButtonElement>)=>{e.currentTarget.setPointerCapture(e.nativeEvent.pointerId);keys.current.left=true;}} onPointerUp={()=>{keys.current.left=false;}} onPointerCancel={()=>{keys.current.left=false;}} onLostPointerCapture={()=>{keys.current.left=false;}}>←</button>
+    <button style={controlStyle} aria-label="向右" onPointerDown={(e:PointerEvent<HTMLButtonElement>)=>{e.currentTarget.setPointerCapture(e.nativeEvent.pointerId);keys.current.right=true;}} onPointerUp={()=>{keys.current.right=false;}} onPointerCancel={()=>{keys.current.right=false;}} onLostPointerCapture={()=>{keys.current.right=false;}}>→</button>
+   </div>
+  </>}
+  pad={<HandheldPad
+   dirs={{
+    left:{mode:'hold',onDown:()=>{keys.current.left=true;},onUp:()=>{keys.current.left=false;},ariaLabel:'向左'},
+    right:{mode:'hold',onDown:()=>{keys.current.right=true;},onUp:()=>{keys.current.right=false;},ariaLabel:'向右'},
+   }}
+  />}
+  padOverlayOnly
+  help={<Text>全屏十字键按住左右移动篮子，也可拖动篮子。方向键 / A、D 移动，空格 / P 暂停，Esc 退出全屏。鲜果加分，连续接果有奖励；漏接鲜果、接到炸弹或带黑斑的坏果均扣一条生命。最高分保留在当前打开的页面中。</Text>}
+ >
+ <canvas ref={cv} width={800} height={540} aria-label="接水果游戏区，使用左右方向键或手指拖动篮子" onPointerDown={(e:PointerEvent<HTMLCanvasElement>)=>{e.preventDefault();e.currentTarget.setPointerCapture(e.nativeEvent.pointerId);move(e);}} onPointerMove={move} style={immersive?{display:'block',width:fit.width,height:fit.height,maxWidth:'none',borderRadius:12,touchAction:'none'}:{display:'block',width:'100%',height:'auto',borderRadius:12,touchAction:'none'}} />
+ </ImmersiveFrame>
  </Page>;
 }

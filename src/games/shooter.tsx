@@ -7,11 +7,18 @@ import {
   useRef,
   useState
 } from '../compat/grok-canvas';
+import { HandheldPad } from '../mobile/HandheldPad';
+import { ImmersiveFrame } from '../mobile/ImmersiveFrame';
+import { useImmersivePlay } from '../mobile/immersivePlay';
+import { useStageFit } from '../mobile/useStageFit';
 type Dot={x:number;y:number;vx:number;vy:number;r:number;hp:number;kind:number;t:number};
 type State={x:number;y:number;hp:number;score:number;wave:number;time:number;spawn:number;shot:number;power:number;shield:number;enemies:Dot[];bullets:Dot[];shots:Dot[];items:Dot[];sparks:Dot[];mode:string;next:number;boss:boolean};
 const W=480,H=680;
 function fresh():State{return {x:240,y:570,hp:4,score:0,wave:0,time:0,spawn:0,shot:0,power:0,shield:2,enemies:[],bullets:[],shots:[],items:[],sparks:[],mode:'ready',next:0,boss:false};}
-export default function App(){const theme=useGrokTheme();const canvas=useRef<HTMLCanvasElement>(null);const game=useRef<State>(fresh());const keys=useRef<Set<string>>(new Set());const drag=useRef(false);const [hud,setHud]=useState({score:0,wave:0,hp:4,mode:'ready',power:0});
+export default function App(){const theme=useGrokTheme();const canvas=useRef<HTMLCanvasElement>(null);const stageRef=useRef<HTMLDivElement|null>(null);const game=useRef<State>(fresh());const keys=useRef<Set<string>>(new Set());const drag=useRef(false);const [hud,setHud]=useState({score:0,wave:0,hp:4,mode:'ready',power:0});
+ const {active:immersive}=useImmersivePlay();
+ const fit=useStageFit(stageRef,W,H,immersive,true);
+ const holdCode=(code:string,on:boolean)=>{if(on)keys.current.add(code);else keys.current.delete(code);};
 const reset=()=>{game.current=fresh();game.current.mode='play';canvas.current?.focus();};
 const pause=()=>{const s=game.current;if(s.mode==='play')s.mode='pause';else if(s.mode==='pause')s.mode='play';canvas.current?.focus();};
 useEffect(()=>{const c=canvas.current;if(!c)return;const ctx=c.getContext('2d');if(!ctx)return;let raf=0,last=0,ui=0;const rand=(a:number,b:number)=>a+Math.random()*(b-a);const dot=(x:number,y:number,vx:number,vy:number,r:number,hp=1,kind=0):Dot=>({x,y,vx,vy,r,hp,kind,t:0});const burst=(x:number,y:number,n:number)=>{for(let i=0;i<n;i++)game.current.sparks.push(dot(x,y,rand(-150,150),rand(-150,150),rand(1,4),1,Math.random()>0.5?0:1));};
@@ -36,4 +43,31 @@ for(const p of s.items){ctx.strokeStyle=p.kind===1?'#80ffae':'#ffe16b';ctx.lineW
 if(s.mode!=='over'&&(s.shield<=0||Math.floor(s.time*12)%2===0))ship(s.x,s.y,18,'#68d9ff',false);if(s.shield>0){ctx.strokeStyle='#89e4ff';ctx.lineWidth=1;ctx.beginPath();ctx.arc(s.x,s.y,27,0,Math.PI*2);ctx.stroke();}for(const p of s.sparks){ctx.globalAlpha=1-p.t/.65;ctx.fillStyle=p.kind===0?'#ffd078':'#77e3ff';ctx.fillRect(p.x,p.y,p.r,p.r);}ctx.globalAlpha=1;
 if(s.mode!=='play'){ctx.fillStyle='rgba(4,10,24,.78)';ctx.fillRect(0,0,W,H);ctx.textAlign='center';ctx.fillStyle='#e4f4ff';ctx.font='bold 32px sans-serif';ctx.fillText(s.mode==='ready'?'星际战机':s.mode==='pause'?'已暂停':'任务结束',240,290);ctx.font='16px sans-serif';ctx.fillStyle='#92b7d7';ctx.fillText(s.mode==='over'?'最终得分 '+s.score:s.mode==='ready'?'守住航线，迎击旗舰':'点击继续或按 P',240,330);ctx.fillText(s.mode==='ready'?'点击「开始出击」进入战场':s.mode==='over'?'点击「重新出击」再来一次':'',240,365);}
 if(now-ui>100){ui=now;setHud({score:s.score,wave:s.wave,hp:s.hp,mode:s.mode,power:s.power});}raf=requestAnimationFrame(frame);};raf=requestAnimationFrame(frame);return()=>{cancelAnimationFrame(raf);c.removeEventListener('keydown',keydown);c.removeEventListener('keyup',keyup);c.removeEventListener('blur',blur);document.removeEventListener('visibilitychange',hidden);};},[]);
-return <Page title="星际战机" summary="原创纵向卷轴射击 · 自动开火 · 每四波迎战旗舰" width="wide" lang="zh-Hans"><div style={{color:theme.text.primary,fontFamily:theme.font.family,display:'flex',gap:16,flexWrap:'wrap',alignItems:'center'}}><span>得分 {hud.score.toLocaleString()}</span><span>波次 {hud.wave}</span><span>机体 {hud.hp} / 6</span><span>火力 Lv.{hud.power+1}</span><Button label={hud.mode==='ready'?'开始出击':'重新出击'} onClick={reset} variant="primary"/><Button label={hud.mode==='pause'?'继续':'暂停'} onClick={pause} disabled={hud.mode==='ready'||hud.mode==='over'}/></div><div style={{display:'flex',justifyContent:'center',background:theme.bg.subtle,border:'1px solid '+theme.border.default,marginTop:16}}><canvas ref={canvas} width={W} height={H} tabIndex={0} aria-label="星际战机游戏区：方向键或 WASD 移动，P 暂停；触屏按住拖动飞船" style={{width:'100%',maxWidth:480,height:'auto',display:'block',touchAction:'none',outlineColor:theme.border.focus}} onPointerDown={(e)=>{e.preventDefault();e.currentTarget.focus();e.currentTarget.setPointerCapture(e.nativeEvent.pointerId);drag.current=true;const r=e.currentTarget.getBoundingClientRect();game.current.x=Math.max(18,Math.min(W-18,(e.clientX-r.left)/r.width*W));game.current.y=Math.max(35,Math.min(H-25,(e.clientY-r.top)/r.height*H-35));}} onPointerMove={(e)=>{if(!drag.current||game.current.mode!=='play')return;const r=e.currentTarget.getBoundingClientRect();game.current.x=Math.max(18,Math.min(W-18,(e.clientX-r.left)/r.width*W));game.current.y=Math.max(35,Math.min(H-25,(e.clientY-r.top)/r.height*H-35));}} onPointerUp={()=>{drag.current=false;}} onPointerCancel={()=>{drag.current=false;}} onLostPointerCapture={()=>{drag.current=false;}} /></div><Text>键盘：方向键 / WASD 移动，P 暂停；点击战场取得键盘控制。触屏：按住并拖动，战机会位于手指上方。全程自动开火。P 道具提升火力，+ 修复机体并获得短暂无敌；受击降低一级火力。离开战场自动暂停。</Text></Page>;}
+return <Page title="星际战机" summary="原创纵向卷轴射击 · 自动开火 · 每四波迎战旗舰" width="wide" lang="zh-Hans">
+<ImmersiveFrame
+ layout="overlay"
+ stageRef={stageRef}
+ focusRef={canvas}
+ intro={<Text>手机可点「全屏游玩」：战场铺满屏幕，半透明十字键移动（自动开火）；也可按住拖动飞船。电脑仍可用键盘。</Text>}
+ hudStats={<><span>得分 {hud.score.toLocaleString()}</span><span>波次 {hud.wave}</span><span>机体 {hud.hp} / 6</span><span>火力 Lv.{hud.power+1}</span></>}
+ hudActions={<><Button label={hud.mode==='ready'?'出击':'重开'} onClick={reset} variant="primary"/><Button label={hud.mode==='pause'?'继续':'暂停'} onClick={pause} disabled={hud.mode==='ready'||hud.mode==='over'}/></>}
+ side={<>
+  <div className="imm-default-only" style={{color:theme.text.primary,fontFamily:theme.font.family,display:'flex',gap:16,flexWrap:'wrap',alignItems:'center',marginBottom:8}}><span>得分 {hud.score.toLocaleString()}</span><span>波次 {hud.wave}</span><span>机体 {hud.hp} / 6</span><span>火力 Lv.{hud.power+1}</span></div>
+  <div style={{display:'flex',flexWrap:'wrap',gap:10}}><Button label={hud.mode==='ready'?'开始出击':'重新出击'} onClick={reset} variant="primary"/><Button label={hud.mode==='pause'?'继续':'暂停'} onClick={pause} disabled={hud.mode==='ready'||hud.mode==='over'}/></div>
+ </>}
+ pad={<HandheldPad
+  dirs={{
+    left:{mode:'hold',onDown:()=>holdCode('ArrowLeft',true),onUp:()=>holdCode('ArrowLeft',false),ariaLabel:'左移'},
+    right:{mode:'hold',onDown:()=>holdCode('ArrowRight',true),onUp:()=>holdCode('ArrowRight',false),ariaLabel:'右移'},
+    up:{mode:'hold',onDown:()=>holdCode('ArrowUp',true),onUp:()=>holdCode('ArrowUp',false),ariaLabel:'上移'},
+    down:{mode:'hold',onDown:()=>holdCode('ArrowDown',true),onUp:()=>holdCode('ArrowDown',false),ariaLabel:'下移'},
+  }}
+ />}
+ help={<Text>全屏十字键按住移动，全程自动开火；也可按住拖动飞船。方向键 / WASD 移动，P 暂停，Esc 退出全屏。点击战场取得键盘控制。P 道具提升火力，+ 修复机体并获得短暂无敌；受击降低一级火力。离开战场自动暂停。</Text>}
+>
+<div style={{display:'flex',justifyContent:'center',background:theme.bg.subtle,border:immersive?'none':'1px solid '+theme.border.default,marginTop:immersive?0:16,width:immersive?'auto':'100%'}}>
+<canvas ref={canvas} width={W} height={H} tabIndex={0} aria-label="星际战机游戏区：方向键或 WASD 移动，P 暂停；触屏按住拖动飞船" style={immersive?{width:fit.width,height:fit.height,maxWidth:'none',display:'block',touchAction:'none',outlineColor:theme.border.focus}:{width:'100%',maxWidth:480,height:'auto',display:'block',touchAction:'none',outlineColor:theme.border.focus}} onPointerDown={(e)=>{e.preventDefault();e.currentTarget.focus();e.currentTarget.setPointerCapture(e.nativeEvent.pointerId);drag.current=true;const r=e.currentTarget.getBoundingClientRect();game.current.x=Math.max(18,Math.min(W-18,(e.clientX-r.left)/r.width*W));game.current.y=Math.max(35,Math.min(H-25,(e.clientY-r.top)/r.height*H-35));}} onPointerMove={(e)=>{if(!drag.current||game.current.mode!=='play')return;const r=e.currentTarget.getBoundingClientRect();game.current.x=Math.max(18,Math.min(W-18,(e.clientX-r.left)/r.width*W));game.current.y=Math.max(35,Math.min(H-25,(e.clientY-r.top)/r.height*H-35));}} onPointerUp={()=>{drag.current=false;}} onPointerCancel={()=>{drag.current=false;}} onLostPointerCapture={()=>{drag.current=false;}} />
+</div>
+</ImmersiveFrame>
+</Page>;
+}

@@ -9,8 +9,12 @@ import {
   useMemo,
   useCallback,
   useGrokTheme,
-  type CSSProperties
+  type CSSProperties,
+  useRef
 } from '../compat/grok-canvas';
+import { ImmersiveFrame } from '../mobile/ImmersiveFrame';
+import { useImmersivePlay } from '../mobile/immersivePlay';
+import { useStageFit } from '../mobile/useStageFit';
 
 type Cell = 0 | 1 | 2;
 type Board = Cell[][];
@@ -226,6 +230,10 @@ function cellKey(r: number, c: number): string {
 }
 
 export default function App() {
+ const stageRef=useRef<HTMLDivElement|null>(null);
+ const {active:immersive}=useImmersivePlay();
+ const fit=useStageFit(stageRef,8,8,immersive,true);
+
   const theme = useGrokTheme();
   const [mode, setMode] = useState<Mode>("ai");
   const [humanSide, setHumanSide] = useState<Side>(1);
@@ -380,6 +388,12 @@ export default function App() {
       width="wide"
       lang="zh-Hans"
     >
+      <ImmersiveFrame
+        layout="banded"
+        stageRef={stageRef}
+        intro={<Text>手机可点「全屏游玩」：棋盘铺满屏幕，点格落子。不强加方向键。</Text>}
+      >
+
       <Section>
         <Text>
           黑棋先行。落子须夹住对方棋子并沿八个方向翻转；无合法着法则跳过。双方皆无着或棋盘下满时，以棋子多者胜。
@@ -537,11 +551,13 @@ export default function App() {
         </div>
       </Section>
 
-      <Section heading="玩法说明">
+      <div className="imm-help"><Section heading="玩法说明">
         <Text>
           人机模式可选先手（黑）或后手（白）。AI 使用两到三层极小极大搜索，兼顾角点、边缘与行动力，有一定挑战但不至于无解。切换模式或先后手会重新开局；刷新页面不保留棋局。
         </Text>
-      </Section>
+      </Section></div>
+    
+      </ImmersiveFrame>
     </Page>
   );
 }

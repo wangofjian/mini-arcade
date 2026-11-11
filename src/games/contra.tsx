@@ -9,6 +9,10 @@ import {
   useState,
   type PointerEvent
 } from '../compat/grok-canvas';
+import { HandheldPad } from '../mobile/HandheldPad';
+import { ImmersiveFrame } from '../mobile/ImmersiveFrame';
+import { useImmersivePlay } from '../mobile/immersivePlay';
+import { useStageFit } from '../mobile/useStageFit';
 type Box={x:number;y:number;w:number;h:number};
 type Enemy=Box&{home:number;dir:number;hp:number;cool:number;boss:boolean};
 type Bullet={x:number;y:number;vx:number;vy:number;life:number;bad:boolean};
@@ -18,7 +22,10 @@ const W=900,H=460,LENGTH=5700;
 const platforms:Box[]=[{x:0,y:400,w:5700,h:60},...Array.from({length:15},(_:unknown,i:number)=>({x:320+i*345,y:i%3===0?294:320,w:150,h:18}))];
 function fresh():World{return {p:{x:70,y:356,w:25,h:44,vy:0,dir:1,ground:true,inv:1,hp:3},enemies:Array.from({length:25},(_:unknown,i:number)=>({x:480+i*190,y:360,w:26,h:40,home:480+i*190,dir:i%2?1:-1,hp:2,cool:1+i%4*.4,boss:false})).concat([{x:5470,y:322,w:66,h:78,home:5470,dir:-1,hp:36,cool:1,boss:true}]),bullets:[],sparks:[],score:0,lives:4,cp:0,cam:0,shot:0,power:0,pickups:[650,1820,2800,3820,4800].map((x:number)=>({x,y:365,used:false})),mode:'ready',time:0,jumpHeld:false};}
 export default function App(){
- const theme=useGrokTheme();const canvas=useRef<HTMLCanvasElement|null>(null);const game=useRef<World>(fresh());const keys=useRef<Record<string,boolean>>({});const [mode,setMode]=useState('ready');const [hud,setHud]=useState('生命 4 · HP 3 · 得分 0');
+ const theme=useGrokTheme();const canvas=useRef<HTMLCanvasElement|null>(null);const stageRef=useRef<HTMLDivElement|null>(null);const game=useRef<World>(fresh());const keys=useRef<Record<string,boolean>>({});const [mode,setMode]=useState('ready');const [hud,setHud]=useState('生命 4 · HP 3 · 得分 0');
+ const {active:immersive}=useImmersivePlay();
+ const fit=useStageFit(stageRef,W,H,immersive,true);
+ const hold=(key:string,on:boolean)=>{keys.current[key]=on;};
  const change=(m:World['mode'])=>{game.current.mode=m;setMode(m);};
  const start=()=>{game.current=fresh();keys.current={};change('play');canvas.current?.focus();};
  const pause=()=>{if(game.current.mode==='play')change('pause');else if(game.current.mode==='pause')change('play');};
@@ -56,5 +63,37 @@ export default function App(){
  const loop=(t:number)=>{const dt=Math.min((t-last)/1000||.016,.035);last=t;step(dt);render();if(t-ui>200){ui=t;const g=game.current;setHud('生命 '+g.lives+' · HP '+g.p.hp+' · 得分 '+g.score+' · 检查点 '+g.cp/1900+'/2');}raf=requestAnimationFrame(loop);};raf=requestAnimationFrame(loop);return()=>{cancelAnimationFrame(raf);node.removeEventListener('keydown',down);node.removeEventListener('keyup',up);window.removeEventListener('blur',blur);};
  },[theme.font.mono]);
  const control=(key:string,label:string)=><button key={key} aria-label={label} onPointerDown={(e:PointerEvent<HTMLButtonElement>)=>{e.preventDefault();e.currentTarget.setPointerCapture(e.nativeEvent.pointerId);keys.current[key]=true;}} onPointerUp={(e:PointerEvent<HTMLButtonElement>)=>{e.preventDefault();keys.current[key]=false;}} onPointerCancel={()=>{keys.current[key]=false;}} onLostPointerCapture={()=>{keys.current[key]=false;}} style={{background:theme.bg.subtle,color:theme.text.primary,border:'1px solid '+theme.border.default,padding:'15px 21px',fontFamily:theme.font.family,fontSize:18,touchAction:'none',userSelect:'none'}}>{label}</button>;
- return <Page title="丛林突击" summary="原创像素风横版跑跳射击 · 三段防线，一次突围。" width="wide" lang="zh-Hans"><Section><div style={{display:'flex',flexWrap:'wrap',gap:12,alignItems:'flex-start'}}><div style={{flex:'3 1 600px',minWidth:0}}><canvas ref={canvas} width={W} height={H} tabIndex={0} aria-label="丛林突击游戏画面，点击后使用键盘操作" onBlur={()=>{keys.current={};if(game.current.mode==='play')change('pause');}} style={{width:'100%',display:'block',outlineColor:theme.border.focus,touchAction:'none'}}/><div style={{display:'flex',flexWrap:'wrap',gap:8,marginTop:12}}><Button label={mode==='ready'?'开始突围':'重新开始'} onClick={start} variant="primary"/><Button label={mode==='pause'?'继续':'暂停'} onClick={pause} disabled={mode!=='pause'&&mode!=='play'}/></div><div style={{display:'flex',flexWrap:'wrap',gap:8,marginTop:12}}>{control('left','←')}{control('right','→')}{control('jump','跳跃')}{control('shoot','开火')}</div></div><div style={{flex:'1 1 210px',color:theme.text.primary}}><Text>{hud}</Text><Text>点击开始后：A/D 或 ←/→ 移动，Space、W 或 ↑ 跳跃，J/Z 按住连射，P 暂停。手机可同时按住方向与开火按钮。</Text><Text>拾取 S 获得 15 秒散射。旗帜是检查点，并回复 HP；每条命有 3 HP，受击后短暂无敌。最后击败装甲守卫，再跑进出口通关。</Text><Text>四条命用尽则任务失败。离开游戏画面会自动暂停；继续键盘操作前请点一下画面。原创角色与场景，无外部素材。</Text></div></div></Section></Page>;
+ return <Page title="丛林突击" summary="原创像素风横版跑跳射击 · 三段防线，一次突围。" width="wide" lang="zh-Hans">
+ <ImmersiveFrame
+  layout="overlay"
+  stageRef={stageRef}
+  focusRef={canvas}
+  intro={<Text>手机可点「全屏游玩」：画面铺满屏幕，半透明十字键左右移动、上键跳跃，右侧圆形键开火。电脑仍可用键盘。</Text>}
+  hudStats={<span>{hud}</span>}
+  hudActions={<><Button label={mode==='ready'?'开始':'重开'} onClick={start} variant="primary"/><Button label={mode==='pause'?'继续':'暂停'} onClick={pause} disabled={mode!=='pause'&&mode!=='play'}/></>}
+  side={<>
+   <Text>{hud}</Text>
+   <div style={{display:'flex',flexWrap:'wrap',gap:8,marginTop:12}}><Button label={mode==='ready'?'开始突围':'重新开始'} onClick={start} variant="primary"/><Button label={mode==='pause'?'继续':'暂停'} onClick={pause} disabled={mode!=='pause'&&mode!=='play'}/></div>
+   <div className="imm-inline-controls" style={{display:'flex',flexWrap:'wrap',gap:8,marginTop:12}}>{control('left','←')}{control('right','→')}{control('jump','跳跃')}{control('shoot','开火')}</div>
+   <div className="imm-default-only">
+    <Text>点击开始后：A/D 或 ←/→ 移动，Space、W 或 ↑ 跳跃，J/Z 按住连射，P 暂停。手机可同时按住方向与开火按钮。</Text>
+    <Text>拾取 S 获得 15 秒散射。旗帜是检查点，并回复 HP；每条命有 3 HP，受击后短暂无敌。最后击败装甲守卫，再跑进出口通关。</Text>
+    <Text>四条命用尽则任务失败。离开游戏画面会自动暂停；继续键盘操作前请点一下画面。原创角色与场景，无外部素材。</Text>
+   </div>
+  </>}
+  pad={<HandheldPad
+   dirs={{
+    left:{mode:'hold',onDown:()=>hold('left',true),onUp:()=>hold('left',false),ariaLabel:'向左'},
+    right:{mode:'hold',onDown:()=>hold('right',true),onUp:()=>hold('right',false),ariaLabel:'向右'},
+    up:{mode:'hold',onDown:()=>hold('jump',true),onUp:()=>hold('jump',false),ariaLabel:'跳跃'},
+    down:{mode:'hold',disabled:true,ariaLabel:'向下（无操作）'},
+   }}
+   actions={[{label:'开火',ariaLabel:'开火',onDown:()=>hold('shoot',true),onUp:()=>hold('shoot',false)}]}
+  />}
+  padOverlayOnly
+  help={<Text>全屏十字键：左右移动，上键跳跃，右侧圆形键按住连射（可同时按）。A/D 或 ←/→ 移动，Space、W 或 ↑ 跳跃，J/Z 按住连射，P 暂停，Esc 退出全屏。拾取 S 获得 15 秒散射。旗帜是检查点，并回复 HP；每条命有 3 HP，受击后短暂无敌。最后击败装甲守卫，再跑进出口通关。四条命用尽则任务失败。离开游戏画面会自动暂停；继续键盘操作前请点一下画面。</Text>}
+ >
+ <canvas ref={canvas} width={W} height={H} tabIndex={0} aria-label="丛林突击游戏画面，点击后使用键盘操作" onBlur={()=>{keys.current={};if(game.current.mode==='play')change('pause');}} style={immersive?{width:fit.width,height:fit.height,maxWidth:'none',display:'block',outlineColor:theme.border.focus,touchAction:'none'}:{width:'100%',display:'block',outlineColor:theme.border.focus,touchAction:'none'}}/>
+ </ImmersiveFrame>
+ </Page>;
 }

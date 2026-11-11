@@ -1,4 +1,5 @@
 import {
+  Text,
   Page,
   Button,
   useGrokTheme,
@@ -7,11 +8,18 @@ import {
   useRef,
   type CSSProperties
 } from '../compat/grok-canvas';
+import { ImmersiveFrame } from '../mobile/ImmersiveFrame';
+import { useImmersivePlay } from '../mobile/immersivePlay';
+import { useStageFit } from '../mobile/useStageFit';
 type Card = { id:number; face:string };
 const symbols=['🐱','🐶','🐼','🦊','🐸','🐨','🐯','🐰','🦋','🐳','🍓','🌻'];
 function deck(n:number):Card[]{ const a=symbols.slice(0,n/2).flatMap((face:string,i:number)=>[{id:i*2,face},{id:i*2+1,face}]); for(let i=a.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[a[i],a[j]]=[a[j],a[i]];}return a; }
 function clock(s:number){return `${Math.floor(s/60).toString().padStart(2,'0')}:${(s%60).toString().padStart(2,'0')}`;}
 export default function App(){
+ const stageRef=useRef<HTMLDivElement|null>(null);
+ const {active:immersive}=useImmersivePlay();
+ const fit=useStageFit(stageRef,4,4,immersive,true);
+
  const t=useGrokTheme();
  const [size,setSize]=useState(12);const [cards,setCards]=useState<Card[]>(()=>deck(12));const [open,setOpen]=useState<number[]>([]);const [matched,setMatched]=useState<number[]>([]);const [moves,setMoves]=useState(0);const [seconds,setSeconds]=useState(0);const [started,setStarted]=useState(false);const [showWin,setShowWin]=useState(true);
  const gate=useRef(false);const pending=useRef<ReturnType<typeof setTimeout>|null>(null);const began=useRef(0);
@@ -22,6 +30,12 @@ export default function App(){
  function flip(i:number){if(gate.current||won||open.includes(i)||matched.includes(i))return;if(!started){began.current=Date.now();setStarted(true);}if(open.length===0){setOpen([i]);return;}const first=open[0];setOpen([first,i]);setMoves((m:number)=>m+1);gate.current=true;const same=cards[first].face===cards[i].face;pending.current=setTimeout(()=>{if(same)setMatched((m:number[])=>[...m,first,i]);setOpen([]);gate.current=false;},same?400:950);}
  const faceStyle:CSSProperties={position:'absolute',inset:0,display:'flex',alignItems:'center',justifyContent:'center',borderRadius:12,backfaceVisibility:'hidden',border:`1px solid ${t.border.default}`};
  return <Page title="翻牌记忆" summary="翻开两张，找到相同的小伙伴。慢慢记，稳稳赢。" width="wide" lang="zh-Hans">
+      <ImmersiveFrame
+        layout="banded"
+        stageRef={stageRef}
+        intro={<Text>手机可点「全屏游玩」：牌面尽量铺满屏幕，点牌配对。不强加方向键。</Text>}
+      >
+
  <div style={{fontFamily:t.font.family,color:t.text.primary}}>
  <div style={{display:'flex',flexWrap:'wrap',gap:10,alignItems:'center',marginBottom:22}}>
  {[12,16,24].map((n:number)=><Button key={n} label={n===12?'4 × 3 · 轻松':n===16?'4 × 4 · 标准':'6 × 4 · 挑战'} variant={size===n?'primary':'quiet'} onClick={()=>reset(n)}/>)}
@@ -45,5 +59,7 @@ export default function App(){
  </div></div>}
  </div>
  <p style={{color:t.text.tertiary,marginTop:20,fontSize:14}}>每翻开两张算一步；不同图案会在片刻后盖回。可用 Tab 选择卡片，按 Enter 或空格翻牌。切换难度会开始新一局。</p>
- </div></Page>;
+ </div>
+      </ImmersiveFrame>
+    </Page>;
 }

@@ -12,6 +12,9 @@ import {
   useGrokTheme,
   type CSSProperties
 } from '../compat/grok-canvas';
+import { ImmersiveFrame } from '../mobile/ImmersiveFrame';
+import { useImmersivePlay } from '../mobile/immersivePlay';
+import { useStageFit } from '../mobile/useStageFit';
 
 type Cell = 0 | 1 | 2;
 type Board = Cell[][];
@@ -252,6 +255,10 @@ function cellKey(r: number, c: number): string {
 }
 
 export default function App() {
+ const stageRef=useRef<HTMLDivElement|null>(null);
+ const {active:immersive}=useImmersivePlay();
+ const fit=useStageFit(stageRef,7,6,immersive,true);
+
   const theme = useGrokTheme();
   const [mode, setMode] = useState<Mode>("ai");
   const [humanSide, setHumanSide] = useState<Side>(1);
@@ -460,6 +467,12 @@ export default function App() {
       width="wide"
       lang="zh-Hans"
     >
+      <ImmersiveFrame
+        layout="banded"
+        stageRef={stageRef}
+        intro={<Text>手机可点「全屏游玩」：棋盘铺满屏幕，点列落子。不强加方向键。</Text>}
+      >
+
       <Section>
         <Text>
           轮流在七列中择一落下棋子，受重力落到该列最低空位。先在横、竖或斜方向连成四子者获胜；棋盘下满且无人连四则为平局。
@@ -676,11 +689,13 @@ export default function App() {
         </div>
       </Section>
 
-      <Section heading="玩法说明">
+      <div className="imm-help"><Section heading="玩法说明">
         <Text>
           人机模式可选先手（红）或后手（黄）。AI 使用约五层带剪枝的极小极大搜索，优先中心列并防范威胁连子，有一定挑战但不保证完美。切换模式或先后手会重新开局；刷新页面不保留棋局。
         </Text>
-      </Section>
+      </Section></div>
+    
+      </ImmersiveFrame>
     </Page>
   );
 }
