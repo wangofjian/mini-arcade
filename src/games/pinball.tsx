@@ -415,6 +415,9 @@ export default function App() {
 
   const hold = (ref: { current: boolean }, v: boolean) => (e: PointerEvent<HTMLButtonElement>) => {
     e.preventDefault();
+    if (v) {
+      try { e.currentTarget.setPointerCapture(e.pointerId); } catch { /* ignore */ }
+    }
     ref.current = v;
   };
 
@@ -479,7 +482,7 @@ export default function App() {
             onPointerDown={hold(leftDown, true)}
             onPointerUp={hold(leftDown, false)}
             onPointerCancel={hold(leftDown, false)}
-            onPointerLeave={hold(leftDown, false)}
+            onLostPointerCapture={hold(leftDown, false)}
           >
             左挡板
           </button>
@@ -489,7 +492,7 @@ export default function App() {
             onPointerDown={hold(plungerDown, true)}
             onPointerUp={hold(plungerDown, false)}
             onPointerCancel={hold(plungerDown, false)}
-            onPointerLeave={hold(plungerDown, false)}
+            onLostPointerCapture={hold(plungerDown, false)}
           >
             {mode === 'over' ? '已结束' : '发射 / 蓄力'}
           </button>
@@ -499,7 +502,7 @@ export default function App() {
             onPointerDown={hold(rightDown, true)}
             onPointerUp={hold(rightDown, false)}
             onPointerCancel={hold(rightDown, false)}
-            onPointerLeave={hold(rightDown, false)}
+            onLostPointerCapture={hold(rightDown, false)}
           >
             右挡板
           </button>

@@ -13,6 +13,8 @@ import {
   type CSSProperties,
   type MouseEvent
 } from '../compat/grok-canvas';
+import { useElementWidth } from '../mobile/useElementWidth';
+import { packedCellWidth } from '../mobile/scale';
 
 type Suit = "S" | "H" | "D" | "C";
 type Rank = 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8 | 9 | 10 | 11 | 12 | 13;
@@ -309,6 +311,8 @@ function EmptySlot(props: {
 }
 
 export default function App() {
+  const boardRef = useRef<HTMLDivElement>(null);
+  const boardWidth = useElementWidth(boardRef, 320);
   const theme = useGrokTheme();
   const [deal, setDeal] = useState<Deal>(() => dealNew());
   const [drawMode, setDrawMode] = useState<DrawMode>("1");
@@ -668,9 +672,9 @@ export default function App() {
     fontSize: 14,
   };
 
-  const CARD_W = 72;
-  const CARD_H = 100;
-  const STEP = 28;
+  const CARD_W = packedCellWidth(boardWidth, 7, 8, 72, 36);
+  const CARD_H = Math.round((CARD_W * 100) / 72);
+  const STEP = Math.max(14, Math.round((CARD_W * 28) / 72));
 
   return (
     <Page
@@ -716,7 +720,7 @@ export default function App() {
       </Section>
 
       <Section>
-        <div style={boardStyle}>
+        <div ref={boardRef} style={boardStyle}>
           {/* Top: stock, waste, foundations */}
           <div style={rowStyle}>
             <div style={{ display: "flex", gap: 10 }}>
@@ -843,10 +847,12 @@ export default function App() {
           <div
             style={{
               display: "flex",
-              flexWrap: "wrap",
+              flexWrap: "nowrap",
               gap: 8,
               alignItems: "flex-start",
               justifyContent: "space-between",
+              width: "100%",
+              minWidth: 0,
             }}
           >
             {deal.tableau.map((pile: Card[], pi: number) => {
@@ -861,8 +867,8 @@ export default function App() {
                     position: "relative",
                     width: CARD_W,
                     minHeight: height,
-                    flex: "1 1 72px",
-                    maxWidth: 90,
+                    flex: "0 0 auto",
+                    maxWidth: CARD_W,
                   }}
                   onClick={(e: MouseEvent<HTMLDivElement>) => {
                     if (e.target === e.currentTarget) {
