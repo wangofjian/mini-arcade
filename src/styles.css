@@ -172,13 +172,69 @@ button { -webkit-tap-highlight-color: transparent; }
 .hold-btn:disabled { opacity: 0.45; cursor: default; }
 .dpad {
   display: grid;
-  grid-template-columns: repeat(3, minmax(48px, 1fr));
-  gap: 8px;
-  width: min(240px, 100%);
+  grid-template-columns: repeat(3, 52px);
+  grid-template-rows: repeat(3, 52px);
+  gap: 4px;
+  width: 168px;
   margin: 0 auto;
   touch-action: none;
+  position: relative;
 }
-.dpad-spacer { min-height: 48px; }
+.dpad .hold-btn {
+  border-radius: 50%;
+  min-width: 52px;
+  min-height: 52px;
+  padding: 0;
+}
+.dpad-spacer { min-width: 0; min-height: 0; }
+.handheld-pad {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 28px;
+  width: 100%;
+  max-width: 420px;
+  margin: 14px auto 0;
+  padding-bottom: max(8px, env(safe-area-inset-bottom));
+}
+.handheld-pad .dpad { margin: 0; }
+.handheld-actions {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  min-height: 168px;
+  padding-bottom: 52px;
+}
+.handheld-action {
+  width: 76px;
+  height: 76px;
+  min-width: 76px;
+  min-height: 76px;
+  padding: 0;
+  border-radius: 50%;
+  font-size: 30px;
+  font-weight: 650;
+}
+.handheld-pad.is-overlay {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  z-index: 3;
+  max-width: none;
+  margin: 0;
+  padding: 0 max(18px, env(safe-area-inset-right)) max(16px, env(safe-area-inset-bottom)) max(18px, env(safe-area-inset-left));
+  pointer-events: none;
+  background: none;
+}
+.handheld-pad.is-overlay .dpad,
+.handheld-pad.is-overlay .handheld-actions { pointer-events: auto; }
+.handheld-pad.is-overlay .hold-btn {
+  background: color-mix(in srgb, var(--gc-bg-elevated) 42%, transparent);
+  border-color: color-mix(in srgb, var(--gc-text) 28%, transparent);
+  backdrop-filter: blur(10px);
+}
 .game-controls {
   display: flex;
   flex-wrap: wrap;
@@ -270,20 +326,26 @@ body.is-immersive-play .gc-page {
   flex-direction: column;
 }
 body.is-immersive-play .tetris-play {
+  position: relative;
   flex: 1;
   min-height: 0;
-  display: flex;
-  flex-direction: column;
-  padding: max(6px, env(safe-area-inset-top)) max(8px, env(safe-area-inset-right)) 0 max(8px, env(safe-area-inset-left));
+  display: block;
+  padding: 0;
 }
 body.is-immersive-play .tetris-hud {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  z-index: 2;
   display: flex;
   flex-wrap: wrap;
   gap: 8px 12px;
   align-items: center;
   justify-content: space-between;
-  flex: 0 0 auto;
-  padding: 4px 2px 8px;
+  padding: max(4px, env(safe-area-inset-top)) 8px 6px;
+  background: color-mix(in srgb, var(--gc-bg) 45%, transparent);
+  backdrop-filter: blur(8px);
 }
 body.is-immersive-play .tetris-hud-stats {
   display: flex;
@@ -306,10 +368,11 @@ body.is-immersive-play .tetris-hud-msg {
   min-height: 1.2em;
 }
 body.is-immersive-play .tetris-stage {
-  flex: 1;
-  min-height: 0;
+  position: absolute;
+  inset: 0;
+  z-index: 0;
   margin: 0;
-  gap: 8px;
+  gap: 0;
   flex-wrap: nowrap;
   align-items: center;
   justify-content: center;
@@ -326,47 +389,25 @@ body.is-immersive-play .tetris-board canvas {
   height: auto;
 }
 body.is-immersive-play .tetris-side {
-  flex: 0 0 72px;
-  width: 72px;
-  min-width: 72px;
-  align-self: center;
+  position: absolute;
+  top: max(56px, calc(env(safe-area-inset-top) + 48px));
+  right: max(8px, env(safe-area-inset-right));
+  z-index: 2;
+  flex: none;
+  width: 64px;
+  min-width: 64px;
+  align-self: auto;
+  pointer-events: auto;
 }
 body.is-immersive-play .tetris-preview {
-  width: 72px;
-  max-width: 72px;
+  width: 64px;
+  max-width: 64px;
   height: auto;
-}
-body.is-immersive-play .tetris-virtual-pad {
-  flex: 0 0 auto;
-  margin-top: 8px;
-  margin-bottom: 0;
-  padding: 8px 8px max(10px, env(safe-area-inset-bottom));
-  display: flex;
-  justify-content: space-between;
-  gap: 10px;
-  background: color-mix(in srgb, var(--gc-bg) 35%, transparent);
-  backdrop-filter: blur(10px);
-  border-radius: 16px 16px 0 0;
-}
-body.is-immersive-play .tetris-pad-move,
-body.is-immersive-play .tetris-pad-act {
-  display: flex;
-  flex: 1;
-  gap: 8px;
-  flex-wrap: wrap;
-}
-body.is-immersive-play .tetris-virtual-pad .hold-btn {
-  flex: 1 1 0;
-  min-width: 0;
-  background: color-mix(in srgb, var(--gc-bg-elevated) 42%, transparent);
-  border-color: color-mix(in srgb, var(--gc-text) 22%, transparent);
+  cursor: pointer;
+  border-radius: 8px;
+  background: color-mix(in srgb, #101723 70%, transparent);
 }
 @media (max-width: 430px) {
-  body.is-immersive-play .tetris-virtual-pad .hold-btn {
-    min-height: 48px;
-    font-size: 16px;
-    padding: 8px 6px;
-  }
   body.is-immersive-play .tetris-hud-stats { font-size: 15px; gap: 10px; }
 }
 .pad-short { display: none; }
