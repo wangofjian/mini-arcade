@@ -9,6 +9,7 @@ import {
   useGrokTheme,
   type CSSProperties
 } from '../compat/grok-canvas';
+import { DPad } from '../mobile/DPad';
 
 const LEVELS = [
  {name:'初次搬运',map:['######','#    #','# @$ .#','#    #','######']},
@@ -93,10 +94,7 @@ export default function App(){
      </div>
      {clear&&<Button label={s.level===7?'回到第 1 关':'下一关 →'} variant="primary" onClick={()=>dispatch({type:'load',level:(s.level+1)%8})}/>}
      <div style={{display:'flex',flexWrap:'wrap',gap:8}}><Button label="撤销 · Z" disabled={!s.history.length} onClick={()=>dispatch({type:'undo'})}/><Button label="重新开始" onClick={()=>dispatch({type:'load',level:s.level})}/></div>
-     <div style={{display:'grid',gridTemplateColumns:'repeat(3,minmax(0,1fr))',gap:8,touchAction:'manipulation'}}>
-      <div/><Button label="↑" onClick={()=>move(0,-1)} disabled={clear}/><div/>
-      <Button label="←" onClick={()=>move(-1,0)} disabled={clear}/><Button label="↓" onClick={()=>move(0,1)} disabled={clear}/><Button label="→" onClick={()=>move(1,0)} disabled={clear}/>
-     </div>
+     <DPad mode="tap-repeat" disabled={clear} onDir={(dir)=>{if(dir==='left')move(-1,0);if(dir==='right')move(1,0);if(dir==='up')move(0,-1);if(dir==='down')move(0,1);}} />
      <div style={{...neutral,fontSize:14,lineHeight:1.8}}>蓝色圆点：你<br/>交叉木箱：待搬运箱子<br/>空心圆：目标位置<br/>对勾箱子：已到位</div>
     </div>
    </div>

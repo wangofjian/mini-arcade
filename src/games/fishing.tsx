@@ -230,6 +230,7 @@ export default function App() {
   const onCastDown = useCallback(
     (e: PointerEvent<HTMLButtonElement>) => {
       e.preventDefault();
+      try { e.currentTarget.setPointerCapture(e.pointerId); } catch { /* ignore */ }
       startCharge();
     },
     [startCharge],
@@ -243,6 +244,7 @@ export default function App() {
   );
   const onReelDown = useCallback((e: PointerEvent<HTMLButtonElement>) => {
     e.preventDefault();
+    try { e.currentTarget.setPointerCapture(e.pointerId); } catch { /* ignore */ }
     reelRef.current = true;
   }, []);
   const onReelUp = useCallback((e: PointerEvent<HTMLButtonElement>) => {
@@ -369,6 +371,7 @@ export default function App() {
               onPointerDown={onCastDown}
               onPointerUp={onCastUp}
               onPointerCancel={onCastUp}
+              onLostPointerCapture={onCastUp}
               style={{
                 minHeight: 48,
                 padding: '8px 18px',
@@ -394,7 +397,7 @@ export default function App() {
               onPointerDown={onReelDown}
               onPointerUp={onReelUp}
               onPointerCancel={onReelUp}
-              onPointerLeave={onReelUp}
+              onLostPointerCapture={onReelUp}
               style={{
                 minHeight: 48,
                 padding: '8px 18px',

@@ -385,6 +385,7 @@ export default function App() {
   const onPointerDown = useCallback((e: PointerEvent<SVGSVGElement>) => {
     if (status !== 'play') return;
     aimingRef.current = true;
+    e.preventDefault();
     e.currentTarget.setPointerCapture(e.pointerId);
     updateAim(e.clientX, e.clientY);
   }, [status, updateAim]);
@@ -462,6 +463,7 @@ export default function App() {
             onPointerMove={onPointerMove}
             onPointerUp={onPointerUp}
             onPointerCancel={onPointerUp}
+            onLostPointerCapture={onPointerUp}
             style={{
               display: 'block',
               maxWidth: 420,

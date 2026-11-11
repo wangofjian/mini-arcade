@@ -8,6 +8,7 @@ import {
   useRef,
   type KeyboardEvent
 } from '../compat/grok-canvas';
+import { HoldButton } from '../mobile/HoldButton';
 
 type Kind = 'I'|'O'|'T'|'S'|'Z'|'J'|'L';
 type Piece = {kind:Kind; m:number[][]; x:number; y:number};
@@ -42,7 +43,7 @@ export default function App(){
  const key=(e:KeyboardEvent<HTMLDivElement>)=>{const k=e.key.toLowerCase();const map:Record<string,string>={arrowleft:'left',a:'left',arrowright:'right',d:'right',arrowup:'cw',w:'cw',x:'cw',z:'ccw',q:'ccw',' ':'drop',p:'pause',r:'restart',c:'hold',shift:'hold',enter:'pause'};if(k==='arrowdown'||k==='s'){e.preventDefault();down.current=true;return;}if(map[k]){e.preventDefault();if(e.repeat&&['drop','pause','restart','hold','cw','ccw'].includes(map[k]))return;act(map[k]);}};
  const g=game.current;const btn={border:`1px solid ${theme.border.default}`,background:theme.bg.subtle,color:theme.text.primary,padding:'12px 16px',borderRadius:8,fontFamily:theme.font.family,fontSize:15,cursor:'pointer',touchAction:'manipulation' as const};
  return <Page title="俄罗斯方块" summary="一局经典方块，随时开玩。七袋随机、落点预览、方块暂存与逐级加速。" width="wide" lang="zh-Hans">
- <Text>先点「开始游戏」或棋盘获取键盘焦点。填满一行即可消除；每消除 10 行升一级。进度仅保留在本次页面中。</Text>
+ <Text>手机用下方按键：按住左右移动会连移，按住软降可持续下落；点按旋转、硬降和暂存。电脑仍可用键盘。填满一行即可消除；每消除 10 行升一级。进度仅保留在本次页面中。</Text>
  <div ref={rootRef} tabIndex={0} onKeyDown={key} onKeyUp={(e:KeyboardEvent<HTMLDivElement>)=>{if(['arrowdown','s'].includes(e.key.toLowerCase())){e.preventDefault();down.current=false;}}} onBlur={()=>{down.current=false;}} style={{outline:'none',color:theme.text.primary,fontFamily:theme.font.family}}>
  <div style={{display:'flex',flexWrap:'wrap',gap:24,alignItems:'flex-start',marginTop:20}}>
  <div style={{flex:'0 1 300px',width:'100%',position:'relative',lineHeight:0,border:`1px solid ${theme.border.strong}`,borderRadius:8,overflow:'hidden'}}>
@@ -55,7 +56,15 @@ export default function App(){
  <div aria-live="polite" style={{fontSize:14,color:theme.text.secondary,margin:'16px 0'}}>{g.message}</div>
  <div style={{display:'flex',flexWrap:'wrap',gap:8}}><Button label={g.status==='running'?'暂停 P':'继续 / 开始 P'} onClick={()=>act('pause')} disabled={g.status==='over'}/><Button label="重新开始 R" onClick={()=>act('restart')}/></div>
  </div></div>
- <div style={{display:'flex',flexWrap:'wrap',gap:8,marginTop:20}}>{[['left','← 左移'],['right','右移 →'],['ccw','↶ 逆旋'],['cw','顺旋 ↷'],['down','↓ 软降'],['drop','硬降 ⤓'],['hold','暂存 C']].map(([action,label]:string[])=><button key={action} type="button" style={btn} onClick={()=>act(action)} disabled={g.status!=='running'}>{label}</button>)}</div>
- <div style={{marginTop:18,fontSize:13,lineHeight:1.9,color:theme.text.secondary}}>← → / A D：移动　↓ / S：按住软降　↑ / W / X：顺时针　Z / Q：逆时针<br/>空格：直接落底　C / Shift：暂存　P：暂停　R：重开<br/>消除 1 / 2 / 3 / 4 行：100 / 300 / 500 / 800 × 当前等级；软降每格 1 分，硬降每格 2 分。离开窗口会自动暂停。</div>
+ <div className="game-controls" style={{marginTop:20}}>
+  <HoldButton label="← 左移" disabled={g.status!=='running'} repeat onPress={()=>act('left')} />
+  <HoldButton label="右移 →" disabled={g.status!=='running'} repeat onPress={()=>act('right')} />
+  <HoldButton label="↶ 逆旋" disabled={g.status!=='running'} onPress={()=>act('ccw')} />
+  <HoldButton label="顺旋 ↷" disabled={g.status!=='running'} onPress={()=>act('cw')} />
+  <HoldButton label="↓ 软降" disabled={g.status!=='running'} onDown={()=>{if(g.status==='running')down.current=true;}} onUp={()=>{down.current=false;}} />
+  <HoldButton label="硬降 ⤓" disabled={g.status!=='running'} onPress={()=>act('drop')} />
+  <HoldButton label="暂存 C" disabled={g.status!=='running'} onPress={()=>act('hold')} />
+ </div>
+ <div style={{marginTop:18,fontSize:13,lineHeight:1.9,color:theme.text.secondary}}>触控按键见上方；键盘：← → / A D：移动　↓ / S：按住软降　↑ / W / X：顺时针　Z / Q：逆时针<br/>空格：直接落底　C / Shift：暂存　P：暂停　R：重开<br/>消除 1 / 2 / 3 / 4 行：100 / 300 / 500 / 800 × 当前等级；软降每格 1 分，硬降每格 2 分。离开窗口会自动暂停。</div>
  </div></Page>;
 }

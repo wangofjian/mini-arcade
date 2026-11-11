@@ -9,6 +9,8 @@ import {
   useState,
   useEffect
 } from '../compat/grok-canvas';
+import { DPad } from '../mobile/DPad';
+import { swipeDirection } from '../mobile/swipe';
 type Point = {x:number;y:number};
 type Phase = 'ready'|'playing'|'paused'|'over'|'won';
 type Spark = {x:number;y:number;vx:number;vy:number;life:number};
@@ -18,7 +20,7 @@ function spawn(snake:Point[]):Point|null { const free:Point[]=[]; for(let y=0;y<
 function fresh(best=0,wrap=false):Game {const snake=[{x:8,y:12},{x:7,y:12},{x:6,y:12},{x:5,y:12}];return {snake,dir:{x:1,y:0},queue:[],food:spawn(snake),score:0,best,phase:'ready',wrap,sparks:[],clock:0,last:0};}
 function interval(score:number):number{return Math.max(62,160-Math.floor(score/30)*10);}
 export default function App(){
- const theme=useGrokTheme(); const canvas=useRef<HTMLCanvasElement|null>(null); const game=useRef<Game>(fresh()); const [view,setView]=useState({score:0,best:0,phase:'ready' as Phase,wrap:false});
+ const theme=useGrokTheme(); const canvas=useRef<HTMLCanvasElement|null>(null); const swipeAt=useRef<{x:number;y:number}|null>(null); const game=useRef<Game>(fresh()); const [view,setView]=useState({score:0,best:0,phase:'ready' as Phase,wrap:false});
  const sync=()=>{const g=game.current;setView({score:g.score,best:g.best,phase:g.phase,wrap:g.wrap});};
  const start=()=>{const g=game.current;game.current=fresh(g.best,g.wrap);game.current.phase='playing';sync();canvas.current?.focus();};
  const pause=()=>{const g=game.current;if(g.phase==='playing')g.phase='paused';else if(g.phase==='paused'){g.phase='playing';g.clock=0;g.last=0;}sync();canvas.current?.focus();};
@@ -40,7 +42,6 @@ export default function App(){
    frame=requestAnimationFrame(draw);
   };frame=requestAnimationFrame(draw);return()=>{cancelAnimationFrame(frame);window.removeEventListener('keydown',key);window.removeEventListener('blur',blur);document.removeEventListener('visibilitychange',hidden);};
  },[]);
- const buttonStyle={background:theme.bg.elevated,color:theme.text.primary,border:`1px solid ${theme.border.default}`,borderRadius:12,padding:'14px 22px',fontSize:22,fontFamily:theme.font.family,touchAction:'manipulation',cursor:'pointer'};
  const overlay=view.phase!=='playing';
  return <Page title="贪吃蛇" summary="一口一格，越吃越快。经典街机，也可以穿墙。" width="wide" lang="zh-Hans">
  <Section>
@@ -50,7 +51,7 @@ export default function App(){
  </div>
  <div style={{display:'grid',gridTemplateColumns:'repeat(auto-fit,minmax(min(100%,300px),1fr))',gap:28,alignItems:'start'}}>
  <div style={{position:'relative',lineHeight:0}}>
- <canvas ref={canvas} width={SIZE} height={SIZE} tabIndex={0} aria-label="贪吃蛇游戏场地，用方向键或 WASD 控制" style={{display:'block',width:'100%',height:'auto',aspectRatio:'1',borderRadius:16,border:`1px solid ${theme.border.default}`,touchAction:'none'}}/>
+ <canvas ref={canvas} width={SIZE} height={SIZE} tabIndex={0} aria-label="贪吃蛇游戏场地，用方向键、WASD、滑动或下方方向键控制" onPointerDown={(e)=>{swipeAt.current={x:e.clientX,y:e.clientY};try{e.currentTarget.setPointerCapture(e.nativeEvent.pointerId);}catch{/* ignore */}}} onPointerUp={(e)=>{const o=swipeAt.current;swipeAt.current=null;if(!o)return;const d=swipeDirection(e.clientX-o.x,e.clientY-o.y);if(d==='left')turn(-1,0);if(d==='right')turn(1,0);if(d==='up')turn(0,-1);if(d==='down')turn(0,1);}} onPointerCancel={()=>{swipeAt.current=null;}} style={{display:'block',width:'100%',height:'auto',aspectRatio:'1',borderRadius:16,border:`1px solid ${theme.border.default}`,touchAction:'none'}}/>
  {overlay&&<div style={{position:'absolute',inset:0,display:'flex',flexDirection:'column',alignItems:'center',justifyContent:'center',gap:16,lineHeight:1.5,background:theme.bg.base+'ed',borderRadius:16,color:theme.text.primary,padding:20,textAlign:'center'}}>
  <div style={{fontSize:28,fontWeight:600}}>{view.phase==='ready'?'准备开吃':view.phase==='paused'?'休息一下':view.phase==='won'?'占领全场！':'本局结束'}</div>
  <div style={{color:theme.text.secondary,fontSize:14}}>{view.phase==='ready'?'橙色食物 +10 分，别撞到自己。':view.phase==='paused'?'方向已保留，继续你的路线。':`拿下 ${view.score} 分，再挑战一次？`}</div>
@@ -59,12 +60,8 @@ export default function App(){
  </div>
  <div style={{color:theme.text.primary}}>
  <div style={{display:'flex',flexWrap:'wrap',gap:10,marginBottom:24}}><Button label={view.phase==='playing'?'暂停':view.phase==='paused'?'继续':'开始'} variant="primary" onClick={view.phase==='playing'||view.phase==='paused'?pause:start}/><Button label="重新开始" onClick={start}/></div>
- <div style={{fontSize:14,color:theme.text.secondary,marginBottom:16}}>触屏方向盘</div>
- <div style={{display:'grid',gridTemplateColumns:'repeat(3,1fr)',gap:8,marginBottom:24}}>
- <span/><button aria-label="向上" style={buttonStyle} onClick={()=>turn(0,-1)}>↑</button><span/>
- <button aria-label="向左" style={buttonStyle} onClick={()=>turn(-1,0)}>←</button><button aria-label={view.phase==='playing'?'暂停':'继续或开始'} style={buttonStyle} onClick={view.phase==='playing'||view.phase==='paused'?pause:start}>{view.phase==='playing'?'Ⅱ':'▷'}</button><button aria-label="向右" style={buttonStyle} onClick={()=>turn(1,0)}>→</button>
- <span/><button aria-label="向下" style={buttonStyle} onClick={()=>turn(0,1)}>↓</button><span/>
- </div>
+ <div style={{fontSize:14,color:theme.text.secondary,marginBottom:16}}>触屏：在棋盘上滑动，或点按方向键</div>
+ <div style={{marginBottom:24}}><DPad mode="tap" onDir={(dir)=>{if(dir==='left')turn(-1,0);if(dir==='right')turn(1,0);if(dir==='up')turn(0,-1);if(dir==='down')turn(0,1);}} /></div>
  <div style={{fontSize:14,lineHeight:1.9,color:theme.text.secondary}}>方向键 / WASD 转向<br/>空格 / P 暂停与继续<br/>Enter 开始 · R 重开<br/>离开窗口会自动暂停</div>
  <div style={{marginTop:20,fontSize:12,lineHeight:1.7,color:theme.text.tertiary}}>每吃 3 颗提速一次。切换模式会开始新的待机局；最高分只在当前页面会话保留。</div>
  </div>
