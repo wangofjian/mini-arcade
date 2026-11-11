@@ -8,7 +8,7 @@ import {
   useRef,
   type KeyboardEvent
 } from '../compat/grok-canvas';
-import { HoldButton } from '../mobile/HoldButton';
+import { HandheldPad } from '../mobile/HandheldPad';
 import { useImmersivePlay } from '../mobile/immersivePlay';
 import { fitSize } from '../mobile/scale';
 
@@ -38,14 +38,12 @@ export default function App(){
   if(!immersive)return;
   const stage=stageRef.current;if(!stage)return;
   const measure=()=>{
-   const sideW=(sideRef.current?.offsetWidth??72)+8;
-   const fit=fitSize(300,600,Math.max(0,stage.clientWidth-sideW),Math.max(0,stage.clientHeight),true);
+   const fit=fitSize(300,600,Math.max(0,stage.clientWidth),Math.max(0,stage.clientHeight),true);
    setBoardFit({width:Math.max(1,Math.floor(fit.width)),height:Math.max(1,Math.floor(fit.height))});
   };
   measure();
   const ro=new ResizeObserver(measure);
   ro.observe(stage);
-  if(sideRef.current)ro.observe(sideRef.current);
   return()=>ro.disconnect();
  },[immersive]);
  useEffect(()=>{if(immersive)rootRef.current?.focus({preventScroll:true});},[immersive]);
@@ -67,7 +65,7 @@ export default function App(){
   ?{width:boardFit.width,height:boardFit.height,display:'block',touchAction:'none' as const}
   :{width:'100%',display:'block',touchAction:'none' as const};
  return <Page title="俄罗斯方块" summary="一局经典方块，随时开玩。七袋随机、落点预览、方块暂存与逐级加速。" width="wide" lang="zh-Hans">
- <div className="tetris-intro"><Text>手机可点「全屏游玩」，一屏只留棋盘和半透明虚拟键；按住左右会连移，按住软降可持续下落。电脑仍可用键盘。填满一行即可消除；每消除 10 行升一级。进度仅保留在本次页面中。</Text></div>
+ <div className="tetris-intro"><Text>手机可点「全屏游玩」：棋盘铺满屏幕，半透明十字键浮在棋盘上，右侧圆形键旋转。← → 移动，按住 ↓ 软降，↑ 硬降；点右侧预览可暂存。电脑仍可用键盘。填满一行即可消除；每消除 10 行升一级。进度仅保留在本次页面中。</Text></div>
  <div ref={rootRef} className={'tetris-play'+(immersive?' is-on':'')} tabIndex={0} onKeyDown={key} onKeyUp={(e:KeyboardEvent<HTMLDivElement>)=>{if(['arrowdown','s'].includes(e.key.toLowerCase())){e.preventDefault();down.current=false;}}} onBlur={()=>{down.current=false;}} style={{outline:'none',color:theme.text.primary,fontFamily:theme.font.family}}>
  {!immersive&&<div className="tetris-page-actions"><Button label="全屏游玩" variant="primary" onClick={enter}/></div>}
  {immersive&&<div className="tetris-hud">
@@ -83,23 +81,22 @@ export default function App(){
  </div>
  <div ref={sideRef} className="tetris-side">
  <div className="tetris-stats">{stats.map(([label,value]:string[])=><div key={label}><div style={{fontSize:13,color:theme.text.secondary}}>{label}</div><div style={{fontSize:30,fontWeight:600,fontVariantNumeric:'tabular-nums'}}>{value}</div></div>)}</div>
- <canvas ref={previewRef} width={180} height={330} aria-label={`接下来：${g.queue.join('、')}；暂存：${g.hold??'无'}`} className="tetris-preview"/>
+ <canvas ref={previewRef} width={180} height={330} aria-label={`接下来：${g.queue.join('、')}；暂存：${g.hold??'无'}。点击暂存当前方块`} className="tetris-preview" role="button" onClick={()=>act('hold')}/>
  <div className="tetris-side-msg" aria-live="polite">{g.message}</div>
  <div className="tetris-side-actions"><Button label={g.status==='running'?'暂停 P':'继续 / 开始 P'} onClick={()=>act('pause')} disabled={g.status==='over'}/><Button label="重新开始 R" onClick={()=>act('restart')}/></div>
  </div></div>
- <div className="game-controls tetris-virtual-pad">
-  <div className="tetris-pad-move">
-  <HoldButton label="← 左移" ariaLabel="左移" disabled={g.status!=='running'} repeat onPress={()=>act('left')}><span className="pad-full">← 左移</span><span className="pad-short">←</span></HoldButton>
-  <HoldButton label="右移 →" ariaLabel="右移" disabled={g.status!=='running'} repeat onPress={()=>act('right')}><span className="pad-full">右移 →</span><span className="pad-short">→</span></HoldButton>
-  <HoldButton label="↓ 软降" ariaLabel="软降" disabled={g.status!=='running'} onDown={()=>{if(g.status==='running')down.current=true;}} onUp={()=>{down.current=false;}}><span className="pad-full">↓ 软降</span><span className="pad-short">↓</span></HoldButton>
-  </div>
-  <div className="tetris-pad-act">
-  <HoldButton label="↶ 逆旋" ariaLabel="逆时针旋转" disabled={g.status!=='running'} onPress={()=>act('ccw')}><span className="pad-full">↶ 逆旋</span><span className="pad-short">↶</span></HoldButton>
-  <HoldButton label="顺旋 ↷" ariaLabel="顺时针旋转" disabled={g.status!=='running'} onPress={()=>act('cw')}><span className="pad-full">顺旋 ↷</span><span className="pad-short">↷</span></HoldButton>
-  <HoldButton label="硬降 ⤓" ariaLabel="硬降" disabled={g.status!=='running'} onPress={()=>act('drop')}><span className="pad-full">硬降 ⤓</span><span className="pad-short">⤓</span></HoldButton>
-  <HoldButton label="暂存 C" ariaLabel="暂存" disabled={g.status!=='running'} onPress={()=>act('hold')}><span className="pad-full">暂存 C</span><span className="pad-short">暂</span></HoldButton>
-  </div>
- </div>
- <div className="tetris-help">触控按键见上方；键盘：← → / A D：移动　↓ / S：按住软降　↑ / W / X：顺时针　Z / Q：逆时针<br/>空格：直接落底　C / Shift：暂存　P：暂停　R：重开　Esc：退出全屏<br/>消除 1 / 2 / 3 / 4 行：100 / 300 / 500 / 800 × 当前等级；软降每格 1 分，硬降每格 2 分。离开窗口会自动暂停。</div>
+ <HandheldPad
+  className="tetris-virtual-pad"
+  overlay={immersive}
+  disabled={g.status!=='running'}
+  dirs={{
+    left:{mode:'tap-repeat',onPress:()=>act('left'),ariaLabel:'左移'},
+    right:{mode:'tap-repeat',onPress:()=>act('right'),ariaLabel:'右移'},
+    down:{mode:'hold',onDown:()=>{if(g.status==='running')down.current=true;},onUp:()=>{down.current=false;},ariaLabel:'软降'},
+    up:{mode:'tap',onPress:()=>act('drop'),ariaLabel:'硬降'},
+  }}
+  actions={[{label:'↻',ariaLabel:'顺时针旋转',onPress:()=>act('cw')}]}
+/>
+<div className="tetris-help">触控为掌机十字键：← → 移动，按住 ↓ 软降，↑ 硬降，右侧 ↻ 旋转；点 NEXT/HOLD 预览可暂存。键盘：← → / A D：移动　↓ / S：按住软降　↑ / W / X：顺时针　Z / Q：逆时针<br/>空格：直接落底　C / Shift：暂存　P：暂停　R：重开　Esc：退出全屏<br/>消除 1 / 2 / 3 / 4 行：100 / 300 / 500 / 800 × 当前等级；软降每格 1 分，硬降每格 2 分。离开窗口会自动暂停。</div>
  </div></Page>;
 }

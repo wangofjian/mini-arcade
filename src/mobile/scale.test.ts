@@ -45,21 +45,16 @@ describe('fitSize', () => {
   });
 });
 
-describe('tetris immersive board fits a phone screen', () => {
-  it('keeps the 10x20 board and a 72px next column inside common phone viewports', () => {
+describe('tetris immersive board fills a phone screen', () => {
+  it('fits the 10x20 board to the full viewport so the pad can overlay it', () => {
     for (const [vw, vh] of [[320, 568], [375, 667], [390, 844], [430, 932]] as const) {
-      const hud = 72;
-      const pad = 132;
-      const padX = 16;
-      const side = 72;
-      const gap = 8;
-      const availW = vw - padX - side - gap;
-      const availH = vh - hud - pad;
-      const fit = fitSize(300, 600, availW, availH, true);
+      const fit = fitSize(300, 600, vw, vh, true);
       expect(fit.width).toBeGreaterThan(140);
       expect(fit.height).toBeGreaterThan(280);
-      expect(fit.width + side + gap).toBeLessThanOrEqual(vw - padX + 0.5);
-      expect(fit.height + hud + pad).toBeLessThanOrEqual(vh + 0.5);
+      expect(fit.width).toBeLessThanOrEqual(vw + 0.5);
+      expect(fit.height).toBeLessThanOrEqual(vh + 0.5);
+      const leftover = Math.min(vw - fit.width, vh - fit.height);
+      expect(leftover).toBeLessThan(1);
     }
   });
 });
