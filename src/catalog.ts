@@ -1,5 +1,6 @@
 import type { ComponentType } from 'react';
 import Tetris from './games/tetris';
+import TetrisVs from './games/tetrisVs';
 import Snake from './games/snake';
 import Contra from './games/contra';
 import G2048 from './games/2048';
@@ -18,6 +19,7 @@ import Tank from './games/tank';
 import Fruit from './games/fruit';
 import Jump from './games/jump';
 import Gomoku from './games/gomoku';
+import GomokuVs from './games/gomokuVs';
 import Rhythm from './games/rhythm';
 import Huarong from './games/huarong';
 import Slider from './games/slider';
@@ -35,6 +37,10 @@ import Fishing from './games/fishing';
 import Xiangqi from './games/xiangqi';
 import Junqi from './games/junqi';
 import TinyLang from './games/tinylang';
+import YardDefense from './games/yardDefense';
+import SlingWorkshop from './games/slingWorkshop';
+import RollQuest from './games/rollQuest';
+import StreetRush from './games/streetRush';
 
 export type GameEntry = {
   slug: string;
@@ -49,6 +55,7 @@ export type GameEntry = {
 
 export const games: GameEntry[] = [
   { slug: 'tetris', title: '俄罗斯方块', site: '经典方块，踢墙/暂存/幽灵落点', tip: '先看幽灵落点，再决定摆放；暂存能救场。', canvasId: '0ec334d7-8623-4d7f-b7d1-faaf3b268081', component: Tetris },
+  { slug: 'tetris-vs', title: '双人对战俄罗斯方块', site: '房间号联机，垃圾行对战', tip: '把房间链接发给朋友，双方准备后开局；消两行以上就给对方堆垃圾。', canvasId: 'b7e2c14f-3a90-4d5e-9c18-6f4a8e2d1c70', component: TetrisVs },
   { slug: 'snake', title: '贪吃蛇', site: '穿墙、提速', tip: '留出回转空间，熟悉节奏后再挑战提速。', canvasId: 'b718e570-8b77-49b4-95a8-da5ee2cc312c', component: Snake },
   { slug: 'contra', title: '丛林突击', site: '魂斗罗风横版射击', tip: '边移动边射击，跳跃避开迎面的攻击。', canvasId: '504f45ad-4e14-4d85-8b91-2b1aa0e87604', component: Contra },
   { slug: '2048', title: '2048', site: '滑动合并', tip: '尽量把最大数字留在一个角落。', canvasId: '231ec411-01c8-4b7e-9de0-3d1d3594eff2', component: G2048 },
@@ -67,6 +74,7 @@ export const games: GameEntry[] = [
   { slug: 'fruit', title: '接水果', site: '下落接取', tip: '烂果别接；连击时稳住左右，别贪远的。', canvasId: '4b6025ed-a3f0-44c3-a18f-c85ef0d78ab1', component: Fruit },
   { slug: 'jump', title: '跳一跳', site: '蓄力跳远', tip: '看距离松手，踩中心才有连击。', canvasId: '80ed57f6-a5ce-459c-984e-9f3b801b27c0', component: Jump, saves: '本机 localStorage 键 hop-original-best，仅保存最高分，不跨设备同步。' },
   { slug: 'gomoku', title: '五子棋', site: '双人/人机', tip: '攻防兼顾；活三别随便给对手。', canvasId: '14239be4-a132-4c13-919e-c1280b45df1c', component: Gomoku },
+  { slug: 'gomoku-vs', title: '房间号联机五子棋', site: '房间号联机，自由规则五子棋', tip: '把房间链接发给朋友，双方准备后开局；黑先，连五即胜。', canvasId: 'c4a8e2b1-7d35-4f90-9a16-2e8b5c1d7f04', component: GomokuVs },
   { slug: 'rhythm', title: '节奏点按', site: '四轨打拍', tip: 'DFJK 对四轨，贴判定线再按，连击别断。', canvasId: 'cd7c4d60-54ad-4b30-8a72-8bc5db4f3f61', component: Rhythm },
   { slug: 'huarong', title: '华容道', site: '滑块逃生', tip: '先给曹操腾出竖向通道，别把自己堵死。', canvasId: '908fc54f-97a7-4608-b85d-2af59702f517', component: Huarong },
   { slug: 'slider', title: '滑动拼图', site: '数字滑块', tip: '先排好一行再解下一行，别把空白卡死在角里。', canvasId: 'e5d930c7-a8bc-4904-ac2c-715bc477a008', component: Slider },
@@ -83,6 +91,10 @@ export const games: GameEntry[] = [
   { slug: 'fishing', title: '钓鱼', site: '抛竿咬钩收线', tip: '咬钩立刻提竿，收线时把张力留在绿色区间。', canvasId: '1fdc1b83-7f4c-4a27-b8a6-16db1ae0b67e', component: Fishing },
   { slug: 'xiangqi', title: '中国象棋', site: '标准棋盘本地双人', tip: '先看将帅照面和蹩马腿；被将军必须先应将。', canvasId: '83489b60-1f35-42b4-86d4-8d71861306ee', component: Xiangqi },
   { slug: 'junqi', title: '军棋', site: '双人暗棋翻棋', tip: '工兵才能排雷，炸弹同归于尽；目标是吃掉军旗。', canvasId: 'f8651a64-0109-4e1c-b44e-5e555c8d490e', component: Junqi },
+  { slug: 'yard-defense', title: '庭院防线', site: '分路塔防，露水布置守卫', tip: '先放露盘攒资源，喷壶打远程，藤蔓挡路；飞蛾不会啃植物，要从下方打。', canvasId: 'a8f3c219-6e4d-4b1a-9c75-2d8e0f4a6b13', component: YardDefense, saves: '本机 localStorage 键 yard-defense-save，保存已解锁关卡、星级和最高分，不跨设备同步。存储不可用时仍可游玩，只是刷新后进度不会保留。' },
+  { slug: 'sling-workshop', title: '弹射工坊', site: '拉弓弹射，打落陶罐', tip: '向后拉弓瞄准，看抛物线再松手；玻璃怕铁珠，先拆支撑会塌。', canvasId: '3d7e91b4-5c28-4f6a-8e19-1b4c7d0a2f56', component: SlingWorkshop, saves: '本机 localStorage 键 sling-workshop-save，保存已解锁关卡、星级和最高分，不跨设备同步。存储不可用时仍可游玩，只是刷新后进度不会保留。' },
+  { slug: 'roll-quest', title: '滚球历险', site: '一颗小球跳跃闯关', tip: '按住跳跃会跳得更高，松手提前下落。尖刺和掉出场地会回到检查点。', canvasId: '6b2a15e8-9d43-4c70-a1f2-8e5d3c7b0941', component: RollQuest, saves: '本机 localStorage 键 roll-quest-save，保存已解锁关卡、星级和最高分，不跨设备同步。存储不可用时仍可游玩，只是刷新后进度不会保留。' },
+  { slug: 'street-rush', title: '街区突围', site: '分段推进的定点射击', tip: '看到预警圈再开火，红标优先解决；弹匣打空要点换弹。虚构夜色街区。', canvasId: '9c4f20d1-8a67-4e35-b2c8-5f1a7d3e6092', component: StreetRush, saves: '本机 localStorage 键 street-rush-save，保存已解锁关卡、星级和最高分，不跨设备同步。存储不可用时仍可游玩，只是刷新后进度不会保留。' },
 ];
 
 export const bonus: GameEntry[] = [

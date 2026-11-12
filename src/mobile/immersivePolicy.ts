@@ -52,6 +52,19 @@ export const IMMERSIVE_POLICY: Record<string, GameImmersivePolicy> = {
     },
     actions: [{ label: '↻', mapsTo: '顺时针旋转' }],
   },
+  'tetris-vs': {
+    kind: 'pad',
+    layout: 'overlay',
+    logical: { w: 300, h: 600 },
+    dirs: {
+      left: { mode: 'tap-repeat', mapsTo: 'left / A 移动' },
+      right: { mode: 'tap-repeat', mapsTo: 'right / D 移动' },
+      down: { mode: 'hold', mapsTo: '↓ / S 软降' },
+      up: { mode: 'tap', mapsTo: '硬降（触控专用，键盘 ↑ 仍为旋转）' },
+    },
+    actions: [{ label: '↻', mapsTo: '顺时针旋转' }],
+    notes: '全屏时本方棋盘为主，对手棋盘缩在角落，不挡住十字键。',
+  },
   snake: {
     kind: 'pad',
     layout: 'overlay',
@@ -236,6 +249,7 @@ export const IMMERSIVE_POLICY: Record<string, GameImmersivePolicy> = {
   sudoku: { kind: 'touch', layout: 'banded', logical: { w: 9, h: 9 }, notes: '点格填写，保留数字键区。' },
   memory: { kind: 'touch', layout: 'banded', logical: { w: 4, h: 4 }, notes: '点牌配对。' },
   gomoku: { kind: 'touch', layout: 'banded', logical: { w: 15, h: 15 }, notes: '点交叉落子。' },
+  'gomoku-vs': { kind: 'touch', layout: 'banded', logical: { w: 15, h: 15 }, notes: '点交叉落子；房间号联机，不强加方向键。' },
   slider: { kind: 'touch', layout: 'banded', logical: { w: 1, h: 1 }, notes: '点滑块移动。' },
   tictactoe: { kind: 'touch', layout: 'banded', logical: { w: 3, h: 3 }, notes: '点格落子。' },
   whack: { kind: 'touch', layout: 'banded', logical: { w: 3, h: 3 }, notes: '点洞打击。' },
@@ -248,10 +262,27 @@ export const IMMERSIVE_POLICY: Record<string, GameImmersivePolicy> = {
   xiangqi: { kind: 'touch', layout: 'banded', logical: { w: 9, h: 10 }, notes: '点选走子。' },
   junqi: { kind: 'touch', layout: 'banded', logical: { w: 5, h: 12 }, notes: '点选翻棋与走子。' },
   tinylang: { kind: 'skip', layout: 'banded', notes: '非游戏工具，不强加全屏。' },
+  'yard-defense': { kind: 'touch', layout: 'banded', logical: { w: 800, h: 560 }, notes: '点选单位再点格子布置，不强加方向键。' },
+  'sling-workshop': { kind: 'touch', layout: 'banded', logical: { w: 960, h: 540 }, notes: '在弹弓附近拖拽拉弓、松开发射，不强加方向键。' },
+  'roll-quest': {
+    kind: 'pad',
+    layout: 'overlay',
+    logical: { w: 800, h: 450 },
+    dirs: {
+      left: { mode: 'hold', mapsTo: '← / A 向左' },
+      right: { mode: 'hold', mapsTo: '→ / D 向右' },
+      up: { mode: 'hold', mapsTo: '↑ / W / Space 按住跳跃' },
+      down: { mode: 'hold', mapsTo: '↓（无原功能，禁用）', optional: true },
+    },
+    actions: [{ label: '跳', mapsTo: '按住跳跃，松手提前下落', mode: 'hold' }],
+    notes: '按住跳得更高；可同时按方向与跳跃。',
+  },
+  'street-rush': { kind: 'touch', layout: 'banded', logical: { w: 840, h: 480 }, notes: '点画面射击、右下角换弹，不强加方向键；键盘可用方向键移准星。' },
 };
 
 export const GAME_SOURCE_FILES: Record<string, string> = {
   tetris: 'src/games/tetris.tsx',
+  'tetris-vs': 'src/games/tetrisVs.tsx',
   snake: 'src/games/snake.tsx',
   contra: 'src/games/contra.tsx',
   '2048': 'src/games/2048.tsx',
@@ -270,6 +301,7 @@ export const GAME_SOURCE_FILES: Record<string, string> = {
   fruit: 'src/games/fruit.tsx',
   jump: 'src/games/jump.tsx',
   gomoku: 'src/games/gomoku.tsx',
+  'gomoku-vs': 'src/games/gomokuVs.tsx',
   rhythm: 'src/games/rhythm.tsx',
   huarong: 'src/games/huarong.tsx',
   slider: 'src/games/slider.tsx',
@@ -287,4 +319,8 @@ export const GAME_SOURCE_FILES: Record<string, string> = {
   xiangqi: 'src/games/xiangqi.tsx',
   junqi: 'src/games/junqi.tsx',
   tinylang: 'src/games/tinylang.tsx',
+  'yard-defense': 'src/games/yardDefense.tsx',
+  'sling-workshop': 'src/games/slingWorkshop.tsx',
+  'roll-quest': 'src/games/rollQuest.tsx',
+  'street-rush': 'src/games/streetRush.tsx',
 };
