@@ -25,7 +25,7 @@ describe('immersive policy covers the catalog', () => {
     const slugs = allEntries.map((g) => g.slug).sort();
     const policySlugs = Object.keys(IMMERSIVE_POLICY).sort();
     expect(policySlugs).toEqual(slugs);
-    expect(slugs).toHaveLength(36);
+    expect(slugs).toHaveLength(42);
   });
 
   it('only TinyLang skips fullscreen', () => {
