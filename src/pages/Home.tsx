@@ -6,7 +6,7 @@ export function HomePage() {
   return (
     <Page
       title="小游戏厅"
-      summary="四十一款小游戏，一个入口。选一张卡片，直接开玩。"
+      summary="四十七款小游戏，一个入口。选一张卡片，直接开玩。"
       width="wide"
       lang="zh-Hans"
     >
