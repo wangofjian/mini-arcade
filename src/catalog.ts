@@ -41,6 +41,12 @@ import YardDefense from './games/yardDefense';
 import SlingWorkshop from './games/slingWorkshop';
 import RollQuest from './games/rollQuest';
 import StreetRush from './games/streetRush';
+import CurveSprint from './games/curveSprint';
+import TacticSketch from './games/tacticSketch';
+import PitchClash from './games/pitchClash';
+import AlleyDash from './games/alleyDash';
+import SlopeCamp from './games/slopeCamp';
+import AshShed from './games/ashShed';
 
 export type GameEntry = {
   slug: string;
@@ -95,6 +101,12 @@ export const games: GameEntry[] = [
   { slug: 'sling-workshop', title: '弹射工坊', site: '拉弓弹射，打落陶罐', tip: '向后拉弓瞄准，看抛物线再松手；玻璃怕铁珠，先拆支撑会塌。', canvasId: '3d7e91b4-5c28-4f6a-8e19-1b4c7d0a2f56', component: SlingWorkshop, saves: '本机 localStorage 键 sling-workshop-save，保存已解锁关卡、星级和最高分，不跨设备同步。存储不可用时仍可游玩，只是刷新后进度不会保留。' },
   { slug: 'roll-quest', title: '滚球历险', site: '一颗小球跳跃闯关', tip: '按住跳跃会跳得更高，松手提前下落。尖刺和掉出场地会回到检查点。', canvasId: '6b2a15e8-9d43-4c70-a1f2-8e5d3c7b0941', component: RollQuest, saves: '本机 localStorage 键 roll-quest-save，保存已解锁关卡、星级和最高分，不跨设备同步。存储不可用时仍可游玩，只是刷新后进度不会保留。' },
   { slug: 'street-rush', title: '街区突围', site: '分段推进的定点射击', tip: '看到预警圈再开火，红标优先解决；弹匣打空要点换弹。虚构夜色街区。', canvasId: '9c4f20d1-8a67-4e35-b2c8-5f1a7d3e6092', component: StreetRush, saves: '本机 localStorage 键 street-rush-save，保存已解锁关卡、星级和最高分，不跨设备同步。存储不可用时仍可游玩，只是刷新后进度不会保留。' },
+  { slug: 'curve-sprint', title: '弯道冲刺', site: '俯视短道竞速，腰移与氮气', tip: '过弯按住腰移再松开有短加速，直道用氮气。第一且进入目标时间为三星。', canvasId: 'c7d2e4f1-8a53-4b6c-9d10-2e5f8a7b3c46', component: CurveSprint, saves: '本机 localStorage 键 curve-sprint-save，保存已解锁关卡、星级和最高分，不跨设备同步。存储不可用时仍可游玩，只是刷新后进度不会保留。' },
+  { slug: 'tactic-sketch', title: '战术草稿', site: '排阵看比赛，中场再改一次指令', tip: '选阵型和压迫、控球或反击，看球场上的传球走位如何被安排带出来。赢球且净胜或控球达标为三星。', canvasId: 'e8b4a1c6-2f59-4d73-9e20-7a6c5b8d1042', component: TacticSketch, saves: '本机 localStorage 键 tactic-sketch-save，保存已解锁场次、星级和最高分，不跨设备同步。存储不可用时仍可游玩，只是刷新后进度不会保留。' },
+  { slug: 'pitch-clash', title: '小场争锋', site: '俯视 3v3，传球射门抢断', tip: '控制带「你」标记的球员，空格传球、K 射门，无球时抢断。先下 N 球或限时多进球者获胜。', canvasId: 'b6e1c8d4-4a27-4f90-9c3e-5d8a2b7f1046', component: PitchClash, saves: '本机 localStorage 键 pitch-clash-save，保存已解锁场次、星级和最高分，不跨设备同步。存储不可用时仍可游玩，只是刷新后进度不会保留。' },
+  { slug: 'alley-dash', title: '街巷快送', site: '俯视街区送客，抄近路越快越多钱', tip: '靠近客人自动上车，送到目的地下车；腰移过弯、加速冲直线。达到定额且剩余时间多为三星。', canvasId: 'c4a8e3f1-7b26-4d90-ae15-6f9c2d8b3047', component: AlleyDash, saves: '本机 localStorage 键 alley-dash-save，保存已解锁关卡、星级和最高分，不跨设备同步。存储不可用时仍可游玩，只是刷新后进度不会保留。' },
+  { slug: 'slope-camp', title: '坡地争营', site: '俯视小地图即时战略，人机对阵', tip: '民伕收粮，建校场练兵，框选部队去推对面大营。破营且剩余时间多、损失少为三星。', canvasId: 'd5b9f2a8-3c14-4e71-8b26-7a1d4c9e5083', component: SlopeCamp, saves: '本机 localStorage 键 slope-camp-save，保存已解锁关卡、星级和最高分，不跨设备同步。存储不可用时仍可游玩，只是刷新后进度不会保留。' },
+  { slug: 'ash-shed', title: '灰棚交火', site: '俯视双摇杆枪战，人机清场', tip: '一边移动一边瞄准射击，货垛可作掩护。清点敌人或撤离栈口；时间与生命充裕为三星。', canvasId: 'e6c1a3b7-4d25-4f82-9c37-8b2e5d0a6194', component: AshShed, saves: '本机 localStorage 键 ash-shed-save，保存已解锁关卡、星级和最高分，不跨设备同步。存储不可用时仍可游玩，只是刷新后进度不会保留。' },
 ];
 
 export const bonus: GameEntry[] = [

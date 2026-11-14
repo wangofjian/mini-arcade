@@ -278,6 +278,93 @@ export const IMMERSIVE_POLICY: Record<string, GameImmersivePolicy> = {
     notes: '按住跳得更高；可同时按方向与跳跃。',
   },
   'street-rush': { kind: 'touch', layout: 'banded', logical: { w: 840, h: 480 }, notes: '点画面射击、右下角换弹，不强加方向键；键盘可用方向键移准星。' },
+  'curve-sprint': {
+    kind: 'pad',
+    layout: 'overlay',
+    logical: { w: 960, h: 540 },
+    dirs: {
+      left: { mode: 'hold', mapsTo: '← / A 左转' },
+      right: { mode: 'hold', mapsTo: '→ / D 右转' },
+      up: { mode: 'hold', mapsTo: '↑ / W 加速' },
+      down: { mode: 'hold', mapsTo: '↓ / S 制动' },
+    },
+    actions: [
+      { label: '漂', mapsTo: '空格 / Shift 按住腰移', mode: 'hold' },
+      { label: '氮', mapsTo: 'J / N 氮气', mode: 'hold' },
+      { label: '道', mapsTo: 'F 使用机油或护盾', mode: 'hold' },
+    ],
+    notes: '建议横屏；可同时按转向、加速与腰移。',
+  },
+  'tactic-sketch': { kind: 'touch', layout: 'banded', logical: { w: 960, h: 540 }, notes: '点选阵型板与战术指令，再看比赛回放；可加速、暂停、中场调整。不强加方向键。' },
+  'pitch-clash': {
+    kind: 'pad',
+    layout: 'overlay',
+    logical: { w: 960, h: 540 },
+    dirs: {
+      left: { mode: 'hold', mapsTo: '← / A 左移' },
+      right: { mode: 'hold', mapsTo: '→ / D 右移' },
+      up: { mode: 'hold', mapsTo: '↑ / W 上移' },
+      down: { mode: 'hold', mapsTo: '↓ / S 下移' },
+    },
+    actions: [
+      { label: '传', mapsTo: '空格 / J / F 传球', mode: 'hold' },
+      { label: '射', mapsTo: 'K / L / Shift 射门，无球时抢断', mode: 'hold' },
+    ],
+    notes: '建议横屏；可同时按方向与传球或射门。',
+  },
+  'alley-dash': {
+    kind: 'pad',
+    layout: 'overlay',
+    logical: { w: 960, h: 540 },
+    dirs: {
+      left: { mode: 'hold', mapsTo: '← / A 左转' },
+      right: { mode: 'hold', mapsTo: '→ / D 右转' },
+      up: { mode: 'hold', mapsTo: '↑ / W 加速' },
+      down: { mode: 'hold', mapsTo: '↓ / S 制动' },
+    },
+    actions: [
+      { label: '漂', mapsTo: '空格 / Shift 按住腰移', mode: 'hold' },
+      { label: '氮', mapsTo: 'J / N 加速喷射', mode: 'hold' },
+    ],
+    notes: '建议横屏；可同时按转向、加速与腰移。',
+  },
+  'slope-camp': {
+    kind: 'pad',
+    layout: 'overlay',
+    logical: { w: 960, h: 540 },
+    dirs: {
+      left: { mode: 'hold', mapsTo: '← / A 镜头左移' },
+      right: { mode: 'hold', mapsTo: '→ / D 镜头右移' },
+      up: { mode: 'hold', mapsTo: '↑ / W 镜头上移' },
+      down: { mode: 'hold', mapsTo: '↓ / S 镜头下移' },
+    },
+    actions: [
+      { label: '全', mapsTo: 'Q 全选部队', mode: 'tap' },
+      { label: '攻', mapsTo: '全军进攻敌营', mode: 'tap' },
+      { label: '民', mapsTo: '1 训练民伕', mode: 'tap' },
+      { label: '刀', mapsTo: '2 训练刀盾', mode: 'tap' },
+      { label: '弓', mapsTo: '3 训练长弓', mode: 'tap' },
+    ],
+    notes: '建议横屏；点选或框选己方，点地面移动、点敌人进攻，方向键平移镜头。',
+  },
+  'ash-shed': {
+    kind: 'pad',
+    layout: 'overlay',
+    logical: { w: 960, h: 540 },
+    dirs: {
+      left: { mode: 'hold', mapsTo: '← / A 左移' },
+      right: { mode: 'hold', mapsTo: '→ / D 右移' },
+      up: { mode: 'hold', mapsTo: '↑ / W 上移' },
+      down: { mode: 'hold', mapsTo: '↓ / S 下移' },
+    },
+    actions: [
+      { label: '射', mapsTo: '空格 / 左键 射击', mode: 'hold' },
+      { label: '铳', mapsTo: '1 换短铳', mode: 'tap' },
+      { label: '弹', mapsTo: '2 换散弹', mode: 'tap' },
+      { label: '包', mapsTo: '3 换震包', mode: 'tap' },
+    ],
+    notes: '建议横屏；左侧移动，右侧拖动瞄准并射击，可同时移动与开火。',
+  },
 };
 
 export const GAME_SOURCE_FILES: Record<string, string> = {
@@ -323,4 +410,10 @@ export const GAME_SOURCE_FILES: Record<string, string> = {
   'sling-workshop': 'src/games/slingWorkshop.tsx',
   'roll-quest': 'src/games/rollQuest.tsx',
   'street-rush': 'src/games/streetRush.tsx',
+  'curve-sprint': 'src/games/curveSprint.tsx',
+  'tactic-sketch': 'src/games/tacticSketch.tsx',
+  'pitch-clash': 'src/games/pitchClash.tsx',
+  'alley-dash': 'src/games/alleyDash.tsx',
+  'slope-camp': 'src/games/slopeCamp.tsx',
+  'ash-shed': 'src/games/ashShed.tsx',
 };
