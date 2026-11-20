@@ -1,8 +1,40 @@
+import { useState } from 'react';
 import { Grid, LinkCards, Page, Section, Table, Text, useGrokTheme } from '../compat/grok-canvas';
-import { bonus, games } from '../catalog';
+import {
+  GAME_CATEGORIES,
+  bonus,
+  games,
+  gamesInCategory,
+  type GameCategoryId,
+  type OfficialGameEntry,
+} from '../catalog';
+
+type Filter = 'all' | GameCategoryId;
+
+function GameGrid({ items }: { items: OfficialGameEntry[] }) {
+  return (
+    <Grid columns={3}>
+      {items.map((game) => (
+        <LinkCards
+          key={game.slug}
+          links={[{ title: game.title, site: game.site, href: '/games/' + game.slug }]}
+        />
+      ))}
+    </Grid>
+  );
+}
 
 export function HomePage() {
   const theme = useGrokTheme();
+  const [filter, setFilter] = useState<Filter>('all');
+  const selected = filter === 'all' ? null : GAME_CATEGORIES.find((c) => c.id === filter) ?? null;
+  const visible = selected ? gamesInCategory(selected.id) : games;
+  const sections = selected
+    ? [{ category: selected, items: visible }]
+    : GAME_CATEGORIES.map((category) => ({ category, items: gamesInCategory(category.id) })).filter(
+        (section) => section.items.length > 0,
+      );
+
   return (
     <Page
       title="小游戏厅"
@@ -16,20 +48,44 @@ export function HomePage() {
         </span>
       </Text>
       <Section heading="挑一款，开始玩">
-        <Grid columns={3}>
-          {games.map((game) => (
-            <LinkCards
-              key={game.slug}
-              links={[{ title: game.title, site: game.site, href: '/games/' + game.slug }]}
-            />
+        <div className="hall-filters" role="radiogroup" aria-label="按分类筛选游戏">
+          <button
+            type="button"
+            role="radio"
+            aria-checked={filter === 'all'}
+            className={'hall-filter' + (filter === 'all' ? ' is-on' : '')}
+            onClick={() => setFilter('all')}
+          >
+            全部
+          </button>
+          {GAME_CATEGORIES.map((category) => (
+            <button
+              key={category.id}
+              type="button"
+              role="radio"
+              aria-checked={filter === category.id}
+              className={'hall-filter' + (filter === category.id ? ' is-on' : '')}
+              onClick={() => setFilter(category.id)}
+            >
+              {category.label}
+            </button>
           ))}
-        </Grid>
+        </div>
+        {sections.map((section) => (
+          <div key={section.category.id} className="hall-group">
+            <h3 className="hall-group-heading">
+              {section.category.label}
+              <span className="hall-group-count">{section.items.length} 款</span>
+            </h3>
+            <GameGrid items={section.items} />
+          </div>
+        ))}
       </Section>
       <Section heading="上手小贴士">
         <Table
           columns={['游戏', '一句话提示']}
           align={['start', 'start']}
-          rows={games.map((game) => [game.title, game.tip])}
+          rows={visible.map((game) => [game.title, game.tip])}
         />
       </Section>
       <Section heading="加映：写点小程序">
