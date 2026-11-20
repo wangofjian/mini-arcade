@@ -801,3 +801,24 @@ body.is-immersive-play .gomoku-vs-room {
   font-weight: 500;
   font-size: 13px;
 }
+
+/* Dismissible PWA install/update banners: sit under the nav, never overlay the hall grid. */
+.pwa-banners { width: min(1080px, 100%); margin: 0 auto; padding: 0 16px; }
+.pwa-banner {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px 12px;
+  align-items: center;
+  justify-content: space-between;
+  margin: 10px 0 0;
+  padding: 10px 12px;
+  background: var(--gc-bg-elevated);
+  border: 1px solid var(--gc-border);
+  border-radius: var(--gc-radius);
+}
+.pwa-banner p { margin: 0; flex: 1 1 220px; color: var(--gc-text); }
+.pwa-banner-actions { display: flex; flex-wrap: wrap; gap: 8px; }
+@media (max-width: 520px) {
+  .pwa-banners { padding: 0 10px; }
+  .pwa-banner-actions .gc-btn { min-height: 44px; }
+}
