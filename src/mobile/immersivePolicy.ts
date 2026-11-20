@@ -365,6 +365,12 @@ export const IMMERSIVE_POLICY: Record<string, GameImmersivePolicy> = {
     ],
     notes: '建议横屏；左侧移动，右侧拖动瞄准并射击，可同时移动与开火。',
   },
+  landlord: {kind:'touch',layout:'banded',logical:{w:880,h:600},notes:'触控点牌与操作按钮，手牌换行可滚动，不强加方向键。'},
+  pool: {kind:'touch',layout:'banded',logical:{w:840,h:540},notes:'点拖瞄准，滑条力度，停稳后按钮击杆；手中球点空位。'},
+  snooker: {kind:'touch',layout:'banded',logical:{w:840,h:540},notes:'触控瞄准与指定目标彩球，滑条力度，提示不代打。'},
+  tennis: {kind:'pad',layout:'banded',logical:{w:960,h:540},dirs:{left:{mode:'hold',mapsTo:'A / ← 左移'},right:{mode:'hold',mapsTo:'D / → 右移'},up:{mode:'hold',mapsTo:'W / ↑ 上移'},down:{mode:'hold',mapsTo:'S / ↓ 下移'}},actions:[{label:'击',mapsTo:'空格 发球/击球',mode:'hold'}],notes:'建议横屏，方向移动+击球，滑条调落点；提示可开关。'},
+  mahjong: {kind:'touch',layout:'banded',logical:{w:920,h:680},notes:'棋牌触控点牌、吃碰杠胡按钮；手牌换行与页面滚动，不使用动作Pad。'},
+  go: {kind:'touch',layout:'banded',logical:{w:450,h:450},notes:'触控落子，提示只高亮；停一手、认输与重开均可点选。'},
 };
 
 export const GAME_SOURCE_FILES: Record<string, string> = {
@@ -416,4 +422,10 @@ export const GAME_SOURCE_FILES: Record<string, string> = {
   'alley-dash': 'src/games/alleyDash.tsx',
   'slope-camp': 'src/games/slopeCamp.tsx',
   'ash-shed': 'src/games/ashShed.tsx',
+  landlord: 'src/games/landlord.tsx',
+  go: 'src/games/go.tsx',
+  mahjong: 'src/games/mahjong.tsx',
+  pool: 'src/games/CueTable.tsx',
+  snooker: 'src/games/CueTable.tsx',
+  tennis: 'src/games/tennis.tsx',
 };
