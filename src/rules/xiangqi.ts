@@ -230,4 +230,20 @@ function hasLegal(b: Board, side: Side): boolean {
   return false;
 }
 
-export { initialBoard, cloneBoard, inBounds, inPalace, kingSquare, rawAttacks, isChecked, applyMove, rawDests, legalDests, hasLegal, LABELS, ROWS, COLS };
+export { emptyBoard, initialBoard, cloneBoard, inBounds, inPalace, kingSquare, rawAttacks, isChecked, applyMove, rawDests, legalDests, hasLegal, LABELS, ROWS, COLS };
+
+export type Hint = {from: Sq; to: Sq; reason: string};
+export function hintMove(b: Board, side: Side): Hint | null {
+ const values: Record<Kind,number>={K:10000,R:90,C:45,H:40,E:20,A:20,P:10};
+ let best: Hint|null=null, score=-Infinity;
+ for(let r=0;r<10;r++) for(let c=0;c<9;c++) {
+  const p=b[r][c]; if(!p||p.side!==side) continue;
+  for(const to of legalDests(b,r,c)) {
+   const next=applyMove(b,{r,c},to), target=b[to.r][to.c];
+   const check=isChecked(b,side), gives=isChecked(next,side==='r'?'b':'r');
+   const v=(target?values[target.kind]*10:0)+(gives?15:0)+(p.kind==='P'?5:0)-Math.abs(to.c-4);
+   if(v>score){score=v;best={from:{r,c},to,reason:check?'先解除将军，再考虑进攻。':target?'可合法吃子，取得简单子力收益。':gives?'这步可将军，迫使对方应对。':'向中路协调子力；仅为入门建议，非最优解。'};}
+  }
+ }
+ return best;
+}

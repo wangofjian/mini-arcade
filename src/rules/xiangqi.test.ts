@@ -1,5 +1,8 @@
 import { describe, expect, it } from 'vitest';
 import {
+  emptyBoard,
+  hintMove,
+  type Board,
   applyMove,
   hasLegal,
   inPalace,
@@ -81,4 +84,16 @@ describe('中国象棋关键规则', () => {
     expect(isChecked(b, 'b')).toBe(false);
     expect(hasLegal(b, 'r')).toBe(true);
   });
+});
+
+const kings=()=>{const b=emptyBoard();b[0][4]={side:'r',kind:'K'};b[9][4]={side:'b',kind:'K'};b[5][4]={side:'b',kind:'P'};return b;};
+const legal=(b:Board,r:number,c:number,tr:number,tc:number)=>legalDests(b,r,c).some(x=>x.r===tr&&x.c===tc);
+describe('中国象棋复用规则',()=>{
+ it('马腿与象眼',()=>{const b=kings();b[2][2]={side:'r',kind:'H'};expect(rawAttacks(b,2,2,4,3)).toBe(true);b[3][2]={side:'r',kind:'P'};expect(rawAttacks(b,2,2,4,3)).toBe(false);b[0][2]={side:'r',kind:'E'};expect(rawAttacks(b,0,2,2,4)).toBe(true);b[1][3]={side:'b',kind:'P'};expect(rawAttacks(b,0,2,2,4)).toBe(false);});
+ it('宫界河界，兵卒过河不可退',()=>{const b=kings();expect(rawAttacks(b,0,4,1,4)).toBe(true);expect(rawAttacks(b,0,4,0,2)).toBe(false);b[4][2]={side:'r',kind:'E'};expect(rawAttacks(b,4,2,6,4)).toBe(false);b[3][2]={side:'r',kind:'P'};expect(rawAttacks(b,3,2,3,3)).toBe(false);b[5][2]={side:'r',kind:'P'};expect(rawAttacks(b,5,2,5,3)).toBe(true);expect(rawAttacks(b,5,2,4,2)).toBe(false);b[0][3]={side:'r',kind:'A'};expect(rawAttacks(b,0,3,1,4)).toBe(true);expect(rawAttacks(b,0,3,1,2)).toBe(false);});
+ it('炮架恰一，车不能跳，不能吃己方',()=>{const b=kings();b[2][0]={side:'r',kind:'C'};b[2][6]={side:'b',kind:'R'};expect(rawAttacks(b,2,0,2,6)).toBe(false);b[2][3]={side:'r',kind:'P'};expect(rawAttacks(b,2,0,2,6)).toBe(true);b[2][4]={side:'b',kind:'P'};expect(rawAttacks(b,2,0,2,6)).toBe(false);b[2][0]={side:'r',kind:'R'};expect(rawAttacks(b,2,0,2,6)).toBe(false);expect(legal(b,2,0,2,3)).toBe(false);});
+ it('将帅照面，移动挡子自陷被将被拒',()=>{const b=kings();b[5][4]={side:'r',kind:'R'};expect(isChecked(b,'r')).toBe(false);expect(legal(b,5,4,5,3)).toBe(false);const n=applyMove(b,{r:5,c:4},{r:5,c:3});expect(isChecked(n,'r')).toBe(true);});
+ it('被将必须应将，不能忽略对方车将军',()=>{const b=kings();b[1][0]={side:'b',kind:'R'};b[0][0]={side:'r',kind:'R'};b[1][4]={side:'b',kind:'R'};expect(isChecked(b,'r')).toBe(true);expect(legal(b,0,0,0,1)).toBe(false);});
+ it('困毙判负，缺王无合法走法',()=>{const b=kings();b[1][3]={side:'b',kind:'R'};b[1][5]={side:'b',kind:'R'};expect(isChecked(b,'r')).toBe(false);expect(hasLegal(b,'r')).toBe(false);b[0][4]=null;expect(hasLegal(b,'r')).toBe(false);});
+ it('当前红黑提示合法，不改原盘，解将提示明确',()=>{for(const side of ['r','b'] as const){const b=initialBoard(),snap=JSON.stringify(b),h=hintMove(b,side)!;expect(h).not.toBeNull();expect(b[h.from.r][h.from.c]?.side).toBe(side);expect(legal(b,h.from.r,h.from.c,h.to.r,h.to.c)).toBe(true);expect(JSON.stringify(b)).toBe(snap);}const b=kings();b[1][4]={side:'b',kind:'R'};expect(hintMove(b,'r')?.reason).toMatch(/解除将军/);});
 });

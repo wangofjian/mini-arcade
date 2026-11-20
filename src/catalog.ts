@@ -47,6 +47,12 @@ import PitchClash from './games/pitchClash';
 import AlleyDash from './games/alleyDash';
 import SlopeCamp from './games/slopeCamp';
 import AshShed from './games/ashShed';
+import Landlord from './games/landlord';
+import Go from './games/go';
+import Mahjong from './games/mahjong';
+import Pool from './games/pool';
+import Snooker from './games/snooker';
+import Tennis from './games/tennis';
 
 export type GameEntry = {
   slug: string;
@@ -95,7 +101,7 @@ export const games: GameEntry[] = [
   { slug: 'pinball', title: '弹球', site: '弹珠台三球记分', tip: '先蓄力发射，再用左右挡板把球打回弹射器。', canvasId: 'c6ea6157-d5bd-4371-8f3b-accc8be0807b', component: Pinball },
   { slug: 'aeroplane', title: '飞行棋', site: '四色简化人机', tip: '先把棋子飞出来；能撞就撞，终点要点数刚好。', canvasId: '2dd74d62-138b-40da-afce-d8f29d3a82e0', component: Aeroplane },
   { slug: 'fishing', title: '钓鱼', site: '抛竿咬钩收线', tip: '咬钩立刻提竿，收线时把张力留在绿色区间。', canvasId: '1fdc1b83-7f4c-4a27-b8a6-16db1ae0b67e', component: Fishing },
-  { slug: 'xiangqi', title: '中国象棋', site: '标准棋盘本地双人', tip: '先看将帅照面和蹩马腿；被将军必须先应将。', canvasId: '83489b60-1f35-42b4-86d4-8d71861306ee', component: Xiangqi },
+  { slug: 'xiangqi', title: '中国象棋', site: '标准棋盘本地双人，合法提示一步', tip: '先看将帅照面和蹩马腿；被将军必须先应将。', canvasId: '83489b60-1f35-42b4-86d4-8d71861306ee', component: Xiangqi },
   { slug: 'junqi', title: '军棋', site: '双人暗棋翻棋', tip: '工兵才能排雷，炸弹同归于尽；目标是吃掉军旗。', canvasId: 'f8651a64-0109-4e1c-b44e-5e555c8d490e', component: Junqi },
   { slug: 'yard-defense', title: '庭院防线', site: '分路塔防，露水布置守卫', tip: '先放露盘攒资源，喷壶打远程，藤蔓挡路；飞蛾不会啃植物，要从下方打。', canvasId: 'a8f3c219-6e4d-4b1a-9c75-2d8e0f4a6b13', component: YardDefense, saves: '本机 localStorage 键 yard-defense-save，保存已解锁关卡、星级和最高分，不跨设备同步。存储不可用时仍可游玩，只是刷新后进度不会保留。' },
   { slug: 'sling-workshop', title: '弹射工坊', site: '拉弓弹射，打落陶罐', tip: '向后拉弓瞄准，看抛物线再松手；玻璃怕铁珠，先拆支撑会塌。', canvasId: '3d7e91b4-5c28-4f6a-8e19-1b4c7d0a2f56', component: SlingWorkshop, saves: '本机 localStorage 键 sling-workshop-save，保存已解锁关卡、星级和最高分，不跨设备同步。存储不可用时仍可游玩，只是刷新后进度不会保留。' },
@@ -107,6 +113,12 @@ export const games: GameEntry[] = [
   { slug: 'alley-dash', title: '街巷快送', site: '俯视街区送客，抄近路越快越多钱', tip: '靠近客人自动上车，送到目的地下车；腰移过弯、加速冲直线。达到定额且剩余时间多为三星。', canvasId: 'c4a8e3f1-7b26-4d90-ae15-6f9c2d8b3047', component: AlleyDash, saves: '本机 localStorage 键 alley-dash-save，保存已解锁关卡、星级和最高分，不跨设备同步。存储不可用时仍可游玩，只是刷新后进度不会保留。' },
   { slug: 'slope-camp', title: '坡地争营', site: '俯视小地图即时战略，人机对阵', tip: '民伕收粮，建校场练兵，框选部队去推对面大营。破营且剩余时间多、损失少为三星。', canvasId: 'd5b9f2a8-3c14-4e71-8b26-7a1d4c9e5083', component: SlopeCamp, saves: '本机 localStorage 键 slope-camp-save，保存已解锁关卡、星级和最高分，不跨设备同步。存储不可用时仍可游玩，只是刷新后进度不会保留。' },
   { slug: 'ash-shed', title: '灰棚交火', site: '俯视双摇杆枪战，人机清场', tip: '一边移动一边瞄准射击，货垛可作掩护。清点敌人或撤离栈口；时间与生命充裕为三星。', canvasId: 'e6c1a3b7-4d25-4f82-9c37-8b2e5d0a6194', component: AshShed, saves: '本机 localStorage 键 ash-shed-save，保存已解锁关卡、星级和最高分，不跨设备同步。存储不可用时仍可游玩，只是刷新后进度不会保留。' },
+  { slug: 'landlord', title: '斗地主', site: '一人对两AI，无现金玩法', tip: '提示只选合法牌，不会代走；两家过牌后重新领出。', canvasId: '19c8c2bd-04aa-4e21-8180-9ce44b14f0a1', component: Landlord, saves: '仅当前页面保留本局，不持久化手牌、筹码或统计；刷新重新发牌。无金钱玩法。' },
+  { slug: 'go', title: '围棋入门', site: '9路人机或本机双人，提子与提示', tip: '先看棋块的气，提示只高亮不代走；双停结束，盘面简化面积计分。', canvasId: '943e60b8-144e-4b37-9d4f-40019e76ff01', component: Go, saves: '仅当前页面保留棋局；刷新或离开重开，不恢复可能卡住的坏局。' },
+  { slug: 'mahjong', title: '四人麻将·基础版', site: '人对三AI，136张基础吃碰杠胡', tip: '先摸后打，吃限上家；提示只高亮，抢牌时可选组合或过。无现金与筹码。', canvasId: '3b569874-13d4-4f15-9c3e-5ad50ab26251', component: Mahjong, saves: '仅在本页内存保留当前局，不新增存档键；刷新或离开重新发牌。' },
+  { slug: 'pool', title: '8球·简化版', site: '桌球单双色分组，人机或本机双人', tip: '停稳再击杆，犯规手中球；清组后合法黑8取胜，提示只建议瞄准。', canvasId: '892764b2-cea5-43ae-a3b2-73456cd58b61', component: Pool, saves: '仅当前页面保留单局，不新增存档键，刷新重开。' },
+  { slug: 'snooker', title: '6红球斯诺克·简化版', site: '红彩交替，黄到黑清彩计分', tip: '先打红球再指定彩球；彩球复位，犯规至少罚4分。', canvasId: '936b8acd-6468-48fb-9753-3a30dfbc3e87', component: Snooker, saves: '仅当前页面保留比分与单局，刷新重开。' },
+  { slug: 'tennis', title: '小场网球·抢七', site: '俯视人机，7分净胜2', tip: '移动到位再挥拍，注意落地与球高；可开预测落点参考，不自动接球。', canvasId: 'd6e09ca8-70ce-4e3b-9bb8-318ee13a405b', component: Tennis, saves: '仅当前页面保留抢七比分，不新增存档键，刷新重开。' },
 ];
 
 export const bonus: GameEntry[] = [

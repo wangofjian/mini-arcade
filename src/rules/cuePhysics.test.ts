@@ -1,0 +1,11 @@
+import {describe,it,expect} from 'vitest';
+import {ball,physics,strike,stepPhysics,settle,respot,freeSpot,plans} from './cuePhysics';
+const energy=(p:ReturnType<typeof physics>)=>p.balls.reduce((s,b)=>s+b.vx*b.vx+b.vy*b.vy,0);
+describe('二维台球物理',()=>{
+ it('等质量正碰传递动量，首碰记录、无凭空增能',()=>{const p=physics([ball(0,200,200),ball(1,217.9,200)]);p.moving=true;p.balls[0].vx=100;const n=stepPhysics(p,.001);expect(n.shot.first).toBe(1);expect(n.balls[1].vx).toBeGreaterThan(95);expect(Math.abs(n.balls[0].vx)).toBeLessThan(3);expect(energy(n)).toBeLessThanOrEqual(energy(p));expect(energy(n)).toBeGreaterThan(9000);expect(n.balls[1].vx+n.balls[0].vx).toBeCloseTo(100,.0);});
+ it('库边反弹损能，摩擦在有限时间停球',()=>{const p=physics([ball(0,10,120)]);p.moving=true;p.balls[0].vx=-150;const n=stepPhysics(p,.02);expect(n.balls[0].vx).toBeGreaterThan(0);expect(n.shot.rail).toBe(true);expect(energy(n)).toBeLessThan(energy(p));const stop=settle(strike(physics([ball(0,200,100)]),0,.6));expect(stop.moving).toBe(false);expect(stop.balls[0].vx).toBe(0);});
+ it('入袋只记录一次，母球落袋同样被记录且不继续反弹',()=>{for(const id of [0,1]){const p=physics([ball(id,28,10)]);p.moving=true;p.balls[0].vx=-200;const n=stepPhysics(p,.05);expect(n.balls[0].active).toBe(false);expect(n.shot.sunk).toEqual([id]);expect(stepPhysics(n,.05).shot.sunk).toEqual([id]);}});
+ it('高速正碰分段不穿球，dt夹紧，击杆只在停稳时',()=>{const p=physics([ball(0,100,200),ball(1,140,200)]),shot=strike(p,0,1),n=stepPhysics(shot,.05);expect(n.shot.first).toBe(1);expect(n.balls[1].vx).toBeGreaterThan(500);expect(Math.hypot(n.balls[1].x-n.balls[0].x,n.balls[1].y-n.balls[0].y)).toBeGreaterThanOrEqual(17.99);expect(stepPhysics(shot,2)).toEqual(n);expect(strike(shot,0,1)).toBe(shot);expect(strike(p,NaN,1)).toBe(p);expect(energy(n)).toBeLessThanOrEqual(650**2);});
+ it('彩球占位复位寻找合法空位，不重叠或入袋',()=>{const b=[ball(0,200,100),{...ball(7,300,100),active:false}];const n=respot(b,7,200,100),color=n[1];expect(color.active).toBe(true);expect(Math.hypot(color.x-200,color.y-100)).toBeGreaterThanOrEqual(19);expect(freeSpot(n,0,0)).toBe(false);expect(b[1].active).toBe(false);});
+ it('几何提示只选择合法目标且不改物理局面',()=>{const p=physics([ball(0,150,180),ball(1,350,180),ball(8,500,250)]),copy=JSON.stringify(p);const a=plans(p,[1]);expect(a.length).toBeGreaterThan(0);expect(a.every(x=>x.target===1)).toBe(true);expect(JSON.stringify(p)).toBe(copy);expect(plans(p,[])).toEqual([]);});
+});

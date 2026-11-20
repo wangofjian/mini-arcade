@@ -1,0 +1,46 @@
+import {useEffect,useRef,useState} from 'react';
+import {Page,Button} from '../compat/grok-canvas';
+import {ImmersiveFrame} from '../mobile/ImmersiveFrame';
+import {useImmersivePlay} from '../mobile/immersivePlay';
+import {useStageFit} from '../mobile/useStageFit';
+import {POCKETS,R,type Plan} from '../rules/cuePhysics';
+import {createPool,poolTargets,shootPool,tickPool,placePool,hintPool,aiPool,type PoolState} from '../rules/pool';
+import {createSnooker,snookerTargets,shootSnooker,tickSnooker,placeSnooker,hintSnooker,aiSnooker,colorName,type SnookerState} from '../rules/snooker';
+type State=PoolState|SnookerState;
+const colors=['#f7d34b','#267dcc','#e64448','#955dcb','#e87535','#338f60','#7d3937'];
+export default function CueTable({mode}:{mode:'pool'|'snooker'}){
+ const sn=mode==='snooker';const fresh=()=>sn?createSnooker():createPool();
+ const [s,setS]=useState<State>(fresh),[paused,setPaused]=useState(false),[solo,setSolo]=useState(true),[angle,setAngle]=useState(0),[power,setPower]=useState(.6),[target,setTarget]=useState(1),[hint,setHint]=useState<Plan|null>(null);
+ const stage=useRef<HTMLDivElement|null>(null),drag=useRef(false);const {active}=useImmersivePlay();const fit=useStageFit(stage,840,440,active,true);
+ const latest=useRef({s,angle,power,target,paused,solo});latest.current={s,angle,power,target,paused,solo};
+ const targets=sn?snookerTargets(s as SnookerState):poolTargets(s as PoolState),human=!solo||s.turn===0;
+ const shoot=()=>{const c=latest.current;if(c.paused||(c.solo&&c.s.turn!==0))return;setS(old=>sn?shootSnooker(old as SnookerState,c.angle,c.power,c.target):shootPool(old as PoolState,c.angle,c.power));setHint(null);};
+ const reset=()=>{setS(fresh());setHint(null);setPaused(false);setAngle(0);drag.current=false;};
+ useEffect(()=>{if(!targets.includes(target)&&targets.length)setTarget(targets[0]);},[s,target]);
+ useEffect(()=>{const stop=()=>{drag.current=false;setPaused(true);};const hide=()=>{if(document.hidden)stop();};const key=(e:KeyboardEvent)=>{if(e.ctrlKey||e.metaKey||e.altKey)return;
+ if(e.code==='KeyP'){e.preventDefault();if(!e.repeat){drag.current=false;setPaused(p=>!p);}return;}
+ if(e.code==='KeyR'){e.preventDefault();if(!e.repeat)reset();return;}
+ if(e.target instanceof HTMLInputElement||e.target instanceof HTMLSelectElement)return;
+ if(e.code==='Space'){e.preventDefault();shoot();}else if((e.code==='ArrowLeft'||e.code==='ArrowRight')&&!latest.current.paused&&(!latest.current.solo||latest.current.s.turn===0)){e.preventDefault();setAngle(a=>a+(e.code==='ArrowLeft'?-.01745:.01745));}};
+ window.addEventListener('keydown',key);window.addEventListener('blur',stop);document.addEventListener('visibilitychange',hide);return()=>{window.removeEventListener('keydown',key);window.removeEventListener('blur',stop);document.removeEventListener('visibilitychange',hide);drag.current=false;};},[mode]);
+ useEffect(()=>{if(paused)return;let raf=0,last=0;const frame=(t:number)=>{const dt=Math.min(.05,Math.max(0,(t-last)/1000));last=t;setS(old=>sn?tickSnooker(old as SnookerState,dt):tickPool(old as PoolState,dt));raf=requestAnimationFrame(frame);};raf=requestAnimationFrame(frame);return()=>cancelAnimationFrame(raf);},[paused,mode]);
+ useEffect(()=>{if(paused||!solo||s.turn!==1||(s.phase!=='ready'&&s.phase!=='hand'))return;const t=setTimeout(()=>{setS(old=>old.turn===1?(sn?aiSnooker(old as SnookerState):aiPool(old as PoolState)):old);setHint(null);},650);return()=>clearTimeout(t);},[s,solo,paused,mode]);
+ const cue=s.p.balls.find(b=>b.id===0)!;
+ const point=(e:React.PointerEvent<SVGSVGElement>)=>{if(paused||!human)return;const box=e.currentTarget.getBoundingClientRect(),x=(e.clientX-box.left)/box.width*840-20,y=(e.clientY-box.top)/box.height*440-20;
+ if(s.phase==='hand'){setS(old=>sn?placeSnooker(old as SnookerState,x,y):placePool(old as PoolState,x,y));setHint(null);return;}
+ if(s.phase!=='ready')return;setAngle(Math.atan2(y-cue.y,x-cue.x));const near=s.p.balls.find(b=>b.active&&targets.includes(b.id)&&Math.hypot(x-b.x,y-b.y)<25);if(near)setTarget(near.id);};
+ const tools=<><Button label="重开" onClick={reset}/><Button label={paused?'继续':'暂停'} onClick={()=>{drag.current=false;setPaused(!paused);}}/><Button label={solo?'双人重开':'人机重开'} onClick={()=>{setSolo(!solo);reset();}}/><Button label={hint?'关提示':'提示'} disabled={paused||!human||s.phase!=='ready'} onClick={()=>setHint(hint?null:sn?hintSnooker(s as SnookerState):hintPool(s as PoolState))}/></>;
+ const status=sn?`比分 ${(s as SnookerState).scores.join(' : ')} · 目标 ${(s as SnookerState).on==='red'?'红球':(s as SnookerState).on==='color'?'任选彩':colorName((s as SnookerState).clear+5)}`:`分组 ${(s as PoolState).groups.map(x=>x==='solid'?'单色':x==='stripe'?'双色':'未定').join(' / ')}`;
+ const width=active?Math.min(fit.width,940):940;
+ const controls=<> <div style={{display:'flex',alignItems:'center',flexWrap:'wrap',gap:8,marginTop:8}}><label>力度 {Math.round(power*100)}% <input aria-label="击球力度" type="range" min={0} max={1} step={.01} value={power} disabled={paused||!human||s.phase!=='ready'} onChange={e=>setPower(+e.target.value)} style={{minWidth:180,minHeight:44,verticalAlign:'middle'}}/></label><Button label="↶ 1°" disabled={paused||!human} onClick={()=>setAngle(angle-Math.PI/180)}/><Button label="1° ↷" disabled={paused||!human} onClick={()=>setAngle(angle+Math.PI/180)}/><Button label="击杆 / 空格" disabled={paused||!human||s.phase!=='ready'} onClick={shoot}/>{sn?<label>指定目标 <select aria-label="斯诺克指定目标" value={target} disabled={paused||!human||s.phase!=='ready'} onChange={e=>setTarget(+e.target.value)} style={{minHeight:44}}>{targets.map(id=><option key={id} value={id}>{colorName(id)} {id<=6?id:''}</option>)}</select></label>:null}</div> {hint?<p>{hint.reason} 参考力度 {Math.round(hint.power*100)}%。<Button label="采用建议瞄准（不击杆）" disabled={paused||!human||s.phase!=='ready'} onClick={()=>{setAngle(hint.angle);setPower(hint.power);setTarget(hint.target);}}/></p>:null}</>;
+ const help=<> <p role="status">{paused?'已暂停':s.message} · {status} · {s.phase==='done'?`胜方 ${s.winner===0?'玩家1':'玩家2/AI'}`:`轮到玩家${s.turn+1}${solo&&s.turn===1?'（AI）':''}`} · 第{s.shots}杆</p> <details><summary style={{padding:10}}>本款规则与简化边界</summary>{sn?<p>6红球各1分；黄2绿3棕4蓝5粉6黑7。红彩交替，最后一颗红后仍有一杆任选彩，再按黄到黑清彩。任选彩时请指定目标，撞错/进错彩、未碰合法目标或母球落袋均犯规，罚至少4分或本杆相关最高球分给对手。红球犯规进袋不复位；交替期彩球复位，原点被占按附近合法空位寻找；清彩犯规彩球也复位。全台手中球是本款简化（非标准D区规则）。合法得分续杆，不得分或犯规换人；清完黑球比分高者胜，平分复位黑球决胜。无解球重摆、自由球、让杆、贴球/复杂漏球或决胜黑球特殊终局判罚，不冒充赛事裁判。</p>:<p>15目标球+母球。合法进球后按首先进袋球分单色1—7/双色9—15；合法进本组续杆，无本组进球换人。先碰必须是本组未清球，清组后只能先碰黑8；开放桌不能先碰8。未碰球、先碰错球或母球落袋犯规，对手全台手中球。黑8提前入袋、黑8杆犯规均输；必须前一杆已清组，再合法打进黑8才能胜。对方组球合法碰撞中入袋保留在袋中；不实现开球重摆/开球黑8特例、指定袋、无进球必须触库或完整赛事判罚。</p>}<p>物理是等质量二维球碰撞、库边反弹、线性摩擦、六袋，不含塞杆旋转、跳球、三维或真实球杆材质。固定细分推进，停稳才能击杆。提示只是几何建议，采用方向也不会击杆；AI会用同一物理评估可见路线，无隐藏加分或瞬移进球。P暂停、R重开、左右键微调，后台或失焦暂停、释放拖动，离开清理动画与AI定时器。无联机/PWA、远程素材、付费AI或持久化存档。</p></details></>;
+ return <Page title={sn?'6红球斯诺克·简化版':'8球·简化版'} width="wide" lang="zh-Hans" summary="真实二维碰撞、反弹、摩擦与入袋；一人对AI或本机双人。"><ImmersiveFrame layout="banded" stageRef={stage} intro={<p>建议横屏，点「全屏游玩」。点/拖台面瞄准，调力度再击杆。所有球停下才能下一杆。手中球时先点空位摆母球；不保存未完成单局。</p>} pageActions={tools} hudActions={tools} footer={controls} help={help} hudStats={<span>{status} · {paused?'暂停':s.phase==='done'?`胜方P${(s.winner??0)+1}`:`P${s.turn+1} ${s.phase==='hand'?'手中球':s.phase==='moving'?'运动中':'待击杆'}`} · {s.shots}杆</span>}>
+ <div style={{width:active?width:'min(94vw,940px)',maxWidth:'100%',boxSizing:'border-box'}}>
+ <svg aria-label="可触控瞄准的二维台球桌" width={840} height={440} viewBox="-20 -20 840 440" style={{display:'block',width:'100%',height:'auto',background:'#653f25',borderRadius:12,touchAction:'none'}} onPointerDown={e=>{drag.current=true;e.currentTarget.setPointerCapture(e.pointerId);point(e);}} onPointerMove={e=>{if(drag.current&&s.phase!=='hand')point(e);}} onPointerUp={()=>{drag.current=false;}} onPointerCancel={()=>{drag.current=false;}} onLostPointerCapture={()=>{drag.current=false;}}>
+ <rect width={800} height={400} rx={6} fill={sn?'#246e4a':'#176259'}/>{POCKETS.map((q,i)=><circle key={i} {...{cx:q.x,cy:q.y}} r={23} fill="#12171b"/>)}
+ {hint&&s.phase==='ready'?<g pointerEvents="none"><line x1={cue.x} y1={cue.y} x2={hint.ghost.x} y2={hint.ghost.y} stroke="#ffcf51" strokeWidth={2} strokeDasharray="7 5"/><line x1={hint.ghost.x} y1={hint.ghost.y} x2={hint.pocket.x} y2={hint.pocket.y} stroke="#ffcf51" strokeDasharray="4 5"/><circle cx={hint.ghost.x} cy={hint.ghost.y} r={R} fill="none" stroke="#ffcf51"/></g>:null}
+ {s.phase==='ready'&&human?<line x1={cue.x} y1={cue.y} x2={cue.x+Math.cos(angle)*160} y2={cue.y+Math.sin(angle)*160} stroke="#eee" opacity={.7} strokeWidth={2} pointerEvents="none"/>:null}
+ {s.p.balls.filter(b=>b.active).map(b=>{const fill=b.id===0?'#fff':sn?b.id<=6?'#de333b':['#f4d14b','#35a263','#9d603c','#357ddd','#ef9cbf','#13191b'][b.id-7]:b.id===8?'#161b20':colors[(b.id-1)%8%7];return <g key={b.id} pointerEvents="none"><circle cx={b.x} cy={b.y} r={R} fill={fill} stroke={b.id===target?'#ffe080':'#17352d'} strokeWidth={b.id===target?2:1}/>{!sn&&b.id>=9?<path d={`M${b.x-8} ${b.y}h16`} stroke="#fff" strokeWidth={6}/>:null}{b.id!==0&&!sn?<circle cx={b.x} cy={b.y} r={5.5} fill="#fff"/>:null}{b.id!==0?<text x={b.x} y={b.y+3} textAnchor="middle" fontSize={8} fill={sn?'#fff':'#15191c'} stroke="#0006" strokeWidth={.3}>{sn?(b.id<=6?'1':b.id-5):b.id}</text>:null}</g>;})}
+ </svg>
+ </div></ImmersiveFrame></Page>;
+}
