@@ -1,7 +1,8 @@
 # Cloudflare Workers：静态资源 + /api 入口 + 对战房间 Durable Object。
 # 资源目录为 Vite 生产构建产物 dist/。
 # not_found_handling 使 /games/:slug 等深链回退到 index.html。
-# run_worker_first 仅拦截 /api/*（含 WebSocket），其余路径仍走静态资源与 SPA 回退。
+# run_worker_first 拦截 /api/*（含 WebSocket）以及 /sw.js（为 service worker 写上 Cache-Control: no-cache）。
+# 其余路径仍走静态资源与 SPA 回退。
 # Worker 名称必须保持 mini-arcade；本文件不包含账号凭据，不添加付费计划。
 name = "mini-arcade"
 main = "worker/index.ts"
@@ -12,7 +13,7 @@ workers_dev = true
 directory = "./dist"
 not_found_handling = "single-page-application"
 binding = "ASSETS"
-run_worker_first = [ "/api/*" ]
+run_worker_first = [ "/api/*", "/sw.js" ]
 
 [observability]
 enabled = true

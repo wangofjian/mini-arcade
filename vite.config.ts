@@ -1,13 +1,14 @@
 /// <reference types="vitest/config" />
 import { defineConfig } from 'vite';
 import react from '@vitejs/plugin-react';
+import { miniArcadePwa } from './scripts/pwaPlugin.ts';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 
 const rootDir = path.dirname(fileURLToPath(import.meta.url));
 
 export default defineConfig({
-  plugins: [react()],
+  plugins: [react(), miniArcadePwa()],
   base: '/',
   resolve: {
     alias: {

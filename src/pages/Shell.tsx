@@ -1,6 +1,7 @@
 import { Link, Outlet, useLocation, useParams } from 'react-router-dom';
 import { useThemeContext } from '../compat/theme';
 import { findGame } from '../catalog';
+import { PwaBanners } from '../pwa/PwaBanners';
 
 export function Shell() {
   const { preference, setPreference, theme } = useThemeContext();
@@ -35,6 +36,7 @@ export function Shell() {
           {themeLabel}
         </button>
       </header>
+      <PwaBanners />
       <main className="app-main" style={{ background: theme.bg.base }}>
         <Outlet />
       </main>

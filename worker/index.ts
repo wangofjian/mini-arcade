@@ -414,6 +414,15 @@ export default {
     const url = new URL(request.url);
     const path = url.pathname;
 
+    // Service worker must not be long-cached like hashed assets, or old clients cannot update.
+    if (path === '/sw.js' && (request.method === 'GET' || request.method === 'HEAD')) {
+      const asset = await env.ASSETS.fetch(request);
+      const headers = new Headers(asset.headers);
+      headers.set('Cache-Control', 'no-cache, no-store, must-revalidate');
+      headers.set('Service-Worker-Allowed', '/');
+      return new Response(asset.body, { status: asset.status, statusText: asset.statusText, headers });
+    }
+
     if (path === '/api/tetris-vs/rooms' && request.method === 'POST') {
       for (let i = 0; i < 8; i++) {
         const code = generateRoomCode();
