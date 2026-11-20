@@ -761,3 +761,43 @@ body.is-immersive-play .gomoku-vs-room {
 .arcade-lvls .gc-btn {
   min-height: 40px;
 }
+
+/* Home hall category filters: wrap on narrow screens, keep the existing color language. */
+.hall-filters {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin: 0 0 14px;
+}
+.hall-filter {
+  appearance: none;
+  border: 1px solid var(--gc-border);
+  background: var(--gc-bg-elevated);
+  color: var(--gc-text);
+  border-radius: 8px;
+  padding: 8px 14px;
+  min-height: 44px;
+  cursor: pointer;
+  touch-action: manipulation;
+}
+.hall-filter:hover:not(.is-on) { filter: brightness(0.97); }
+.hall-filter.is-on {
+  background: var(--gc-fill-primary);
+  color: var(--gc-on-primary);
+  border-color: transparent;
+}
+.hall-group { margin: 0 0 18px; }
+.hall-group:last-child { margin-bottom: 0; }
+.hall-group-heading {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 8px;
+  font-size: 1.02rem;
+  margin: 0 0 10px;
+}
+.hall-group-count {
+  color: var(--gc-text-secondary);
+  font-weight: 500;
+  font-size: 13px;
+}
